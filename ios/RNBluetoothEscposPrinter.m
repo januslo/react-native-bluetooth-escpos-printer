@@ -1,7 +1,7 @@
 
 #import "RNBluetoochEscposPrinter.h"
 
-@implementation RNBluetoochEscposPrinter
+@implementation RNBluetoothEscposPrinter
 
 - (dispatch_queue_t)methodQueue
 {

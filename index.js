@@ -1,6 +1,6 @@
 
 import { NativeModules } from 'react-native';
 
-const { RNBluetoochEscposPrinter } = NativeModules;
+const { RNBluetoothEscposPrinter } = NativeModules;
 
-export default RNBluetoochEscposPrinter;
+export default RNBluetoothEscposPrinter;

@@ -5,7 +5,7 @@
 #import <React/RCTBridgeModule.h>
 #endif
 
-@interface RNBluetoochEscposPrinter : NSObject <RCTBridgeModule>
+@interface RNBluetoothEscposPrinter : NSObject <RCTBridgeModule>
 
 @end
   
