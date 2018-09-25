@@ -1,0 +1,13 @@
+{
+  "name": "bluetoothEscposPrinterExamples",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start"
+  },
+  "dependencies": {
+    "react": "^16.5.2",
+    "react-native": "0.55.4",
+    "react-native-bluetooth-escpos-printer": "file:///Users/januslo/workspace/react-native-bluetooth-escpos-printer"
+  }
+}

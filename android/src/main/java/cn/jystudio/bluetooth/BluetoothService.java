@@ -1,20 +1,17 @@
 
 package cn.jystudio.bluetooth;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.UUID;
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
 
 /**
  * This class does all the work for setting up and managing Bluetooth
@@ -27,6 +24,7 @@ public class BluetoothService {
     private static final String TAG = "BluetoothService";
     private static final boolean DEBUG = true;
 
+
     // Name for the SDP record when creating server socket
     private static final String NAME = "BTPrinter";
     //UUID must be this
@@ -35,7 +33,7 @@ public class BluetoothService {
 
     // Member fields
     private BluetoothAdapter mAdapter;
-    private Handler mHandler;
+
     private AcceptThread mAcceptThread;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
@@ -48,13 +46,12 @@ public class BluetoothService {
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
 
-    public static final int MESSAGE_STATE_CHANGE = 1;
-    public static final int MESSAGE_READ = 2;
-    public static final int MESSAGE_WRITE = 3;
-    public static final int MESSAGE_DEVICE_NAME = 4;
-    public static final int MESSAGE_TOAST = 5;
-    public static final int MESSAGE_CONNECTION_LOST = 6;
-    public static final int MESSAGE_UNABLE_CONNECT = 7;
+    public static final int MESSAGE_STATE_CHANGE = 4;
+    public static final int MESSAGE_READ = 5;
+    public static final int MESSAGE_WRITE = 6;
+    public static final int MESSAGE_DEVICE_NAME = 7;
+    public static final int MESSAGE_CONNECTION_LOST = 8;
+    public static final int MESSAGE_UNABLE_CONNECT = 9;
 
     // Key names received from the BluetoothService Handler
     public static final String DEVICE_NAME = "device_name";
@@ -62,30 +59,42 @@ public class BluetoothService {
 
     public static String ErrorMessage = "No_Error_Message";
 
+    private static List<BluetoothServiceStateObserver> observers = new ArrayList<BluetoothServiceStateObserver>();
+
     /**
      * Constructor. Prepares a new BTPrinter session.
      *
      * @param context The UI Activity Context
-     * @param handler A Handler to send messages back to the UI Activity
      */
-    public BluetoothService(Context context, Handler handler) {
+    public BluetoothService(Context context) {
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
-        mHandler = handler;
+
     }
 
+    public void addStateObserver(BluetoothServiceStateObserver observer) {
+        observers.add(observer);
+    }
+
+    public void removeStateObserver(BluetoothServiceStateObserver observer) {
+        observers.remove(observer);
+    }
 
     /**
      * Set the current state of the connection
      *
      * @param state An integer defining the current connection state
      */
-    private synchronized void setState(int state) {
+    private synchronized void setState(int state, Map<String, Object> bundle) {
         if (DEBUG) Log.d(TAG, "setState() " + mState + " -> " + state);
         mState = state;
+        infoObervers(state, bundle);
+    }
 
-        // Give the new state to the Handler so the UI Activity can update
-        mHandler.obtainMessage(MESSAGE_STATE_CHANGE, state, -1).sendToTarget();
+    private synchronized void infoObervers(int code, Map<String, Object> bundle) {
+        for (BluetoothServiceStateObserver ob : observers) {
+            ob.onBluetoothServiceStateChanged(code, bundle);
+        }
     }
 
     /**
@@ -119,7 +128,7 @@ public class BluetoothService {
             mAcceptThread = new AcceptThread();
             mAcceptThread.start();
         }
-        setState(STATE_LISTEN);
+        setState(STATE_LISTEN, null);
     }
 
     /**
@@ -147,7 +156,7 @@ public class BluetoothService {
         // Start the thread to connect with the given device
         mConnectThread = new ConnectThread(device);
         mConnectThread.start();
-        setState(STATE_CONNECTING);
+        setState(STATE_CONNECTING, null);
     }
 
     /**
@@ -181,14 +190,10 @@ public class BluetoothService {
         mConnectedThread = new ConnectedThread(socket);
         mConnectedThread.start();
 
-        // Send the name of the connected device back to the UI Activity
-        Message msg = mHandler.obtainMessage(MESSAGE_DEVICE_NAME);
-        Bundle bundle = new Bundle();
-        bundle.putString(DEVICE_NAME, device.getName());
-        msg.setData(bundle);
-        mHandler.sendMessage(msg);
+        Map<String, Object> bundle = new HashMap<String, Object>();
+        bundle.put(DEVICE_NAME, device.getName());
 
-        setState(STATE_CONNECTED);
+        setState(STATE_CONNECTED, bundle);
     }
 
     /**
@@ -196,7 +201,7 @@ public class BluetoothService {
      */
     public synchronized void stop() {
         if (DEBUG) Log.d(TAG, "stop");
-        setState(STATE_NONE);
+        setState(STATE_NONE, null);
         if (mConnectThread != null) {
             mConnectThread.cancel();
             mConnectThread = null;
@@ -229,31 +234,18 @@ public class BluetoothService {
     }
 
     /**
-     * Indicate that the connection attempt failed and notify the UI Activity.
+     * Indicate that the connection attempt failed.
      */
     private void connectionFailed() {
-        setState(STATE_LISTEN);
-
-        // Send a failure message back to the Activity
-        Message msg = mHandler.obtainMessage(MESSAGE_TOAST);
-        Bundle bundle = new Bundle();
-        bundle.putString(TOAST, "Unable to connect device");
-        msg.setData(bundle);
-        mHandler.sendMessage(msg);
+        setState(STATE_LISTEN, null);
+        infoObervers(MESSAGE_UNABLE_CONNECT, null);
     }
 
     /**
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
-        //setState(STATE_LISTEN);
-
-        // Send a failure message back to the Activity
-        Message msg = mHandler.obtainMessage(MESSAGE_TOAST);
-        Bundle bundle = new Bundle();
-        bundle.putString(TOAST, "Device connection was lost");
-        msg.setData(bundle);
-        mHandler.sendMessage(msg);
+        infoObervers(MESSAGE_CONNECTION_LOST, null);
     }
 
     /**
@@ -437,8 +429,9 @@ public class BluetoothService {
                     bytes = mmInStream.read(buffer);
                     if (bytes > 0) {
                         // Send the obtained bytes to the UI Activity
-                        mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-                                .sendToTarget();
+                        Map<String, Object> bundle = new HashMap<String, Object>();
+                        bundle.put("bytes", bytes);
+                        infoObervers(MESSAGE_READ, bundle);
                     } else {
                         Log.e(TAG, "disconnected");
                         connectionLost();
@@ -480,9 +473,9 @@ public class BluetoothService {
                   SPPReadTimeout(readata, 1, 5000);
                 }*/
                 Log.i("BTPWRITE", new String(buffer, "GBK"));
-                // Share the sent message back to the UI Activity
-                mHandler.obtainMessage(MESSAGE_WRITE, -1, -1, buffer)
-                        .sendToTarget();
+                Map<String, Object> bundle = new HashMap<String, Object>();
+                bundle.put("bytes", buffer);
+                infoObervers(MESSAGE_WRITE, bundle);
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }

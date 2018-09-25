@@ -234,7 +234,7 @@ public class PrinterCommand {
         byte[] intToHeight = {0x00, 0x01, 0x02, 0x03};
         byte[] gsExclamationMark = Arrays.copyOf(Command.GS_ExclamationMark, Command.GS_ExclamationMark.length);
         gsExclamationMark[2] = (byte) (intToWidth[nWidthTimes] + intToHeight[nHeightTimes]);
-        byte[] escT = Arrays.copyOf(Command.ESC_Three, Command.ESC_Three.length);
+        byte[] escT = Arrays.copyOf(Command.ESC_t, Command.ESC_t.length);
         escT[2] = (byte) codepage;
         byte[] escM = Arrays.copyOf(Command.ESC_M, Command.ESC_M.length);
         escM[2] = (byte) nFontType;
@@ -357,7 +357,7 @@ public class PrinterCommand {
      * @param nMagnification        放大倍数
      * @return
      */
-    public static byte[] getBarCommand(String str, int nVersion, int nErrorCorrectionLevel,
+    public static byte[] getQRCodeCommand(String str, int nVersion, int nErrorCorrectionLevel,
                                        int nMagnification) {
 
         if (nVersion < 0 | nVersion > 19 | nErrorCorrectionLevel < 0 | nErrorCorrectionLevel > 3
@@ -399,7 +399,7 @@ public class PrinterCommand {
      * @param nHriFontPosition HRI位置
      * @return
      */
-    public static byte[] getCodeBarCommand(String str, int nType, int nWidthX, int nHeight,
+    public static byte[] getBarCodeCommand(String str, int nType, int nWidthX, int nHeight,
                                            int nHriFontType, int nHriFontPosition) {
 
         if (nType < 0x41 | nType > 0x49 | nWidthX < 2 | nWidthX > 6

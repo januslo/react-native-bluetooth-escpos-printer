@@ -1,170 +1,141 @@
 
 package cn.jystudio.bluetooth.escpos;
 
-import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothAdapter;
-import android.content.Intent;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
-import android.widget.Toast;
-import cn.jystudio.bluetooch.BluetoothService;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import cn.jystudio.bluetooth.BluetoothService;
+import cn.jystudio.bluetooth.BluetoothServiceStateObserver;
+import cn.jystudio.bluetooth.escpos.command.sdk.Command;
+import cn.jystudio.bluetooth.escpos.command.sdk.PrintPicture;
+import cn.jystudio.bluetooth.escpos.command.sdk.PrinterCommand;
 import com.facebook.react.bridge.*;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import javax.annotation.Nullable;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
 
-public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule implements ActivityEventListener {
-    private static final String TAG="RNBluetoothEscposPrinterModule";
+public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
+implements BluetoothServiceStateObserver{
+    private static final String TAG = "BluetoothEscposPrinter";
 
-    // Intent request codes
-    private static final int REQUEST_CONNECT_DEVICE = 1;
-    private static final int REQUEST_ENABLE_BT = 2;
-    private static final int REQUEST_CHOSE_BMP = 3;
-    private static final int REQUEST_CAMER = 4;
-
-    public static final int MESSAGE_STATE_CHANGE = BluetoothService.MESSAGE_STATE_CHANGE;
-    public static final int MESSAGE_READ = BluetoothService.MESSAGE_READ;
-    public static final int MESSAGE_WRITE = BluetoothService.MESSAGE_WRITE;
-    public static final int MESSAGE_DEVICE_NAME = BluetoothService.MESSAGE_DEVICE_NAME;
-    public static final int MESSAGE_TOAST = BluetoothService.MESSAGE_TOAST;
-    public static final int MESSAGE_CONNECTION_LOST = BluetoothService.MESSAGE_CONNECTION_LOST;
-    public static final int MESSAGE_UNABLE_CONNECT = BluetoothService.MESSAGE_UNABLE_CONNECT;
-    public static final String DEVICE_NAME =BluetoothService.DEVICE_NAME;
-    public static final String TOAST= BluetoothService.TOAST;
-
-    private static final ArrayBlockingQueue<InvokResult> resultQueue = new ArrayBlockingQueue<InvokResult>(30);
-
-  private final ReactApplicationContext reactContext;
+    public static final int WIDTH_58 = 384;
+    public static final int WIDTH_80 = 576;
+    private final ReactApplicationContext reactContext;
     /******************************************************************************************************/
-    // Name of the connected device
-    private String mConnectedDeviceName = null;
-    // Local Bluetooth adapter
-    private BluetoothAdapter mBluetoothAdapter = null;
-    // Member object for the services
-    private BluetoothService mService = null;
+
+    private int deviceWidth = WIDTH_58;
+    private BluetoothService mService;
 
 
-  public RNBluetoothEscposPrinterModule(ReactApplicationContext reactContext) {
-    super(reactContext);
-    this.reactContext = reactContext;
-      this.reactContext.addActivityEventListener(this);
-      // Get local Bluetooth adapter
-      mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-      // If the adapter is null, then Bluetooth is not supported
-      if (mBluetoothAdapter == null) {
-          Toast.makeText(this.reactContext, "Bluetooth is not available",
-                  Toast.LENGTH_LONG).show();
-      }
-  }
-
-  @Override
-  public String getName() {
-    return "BluetoothEscposPrinter";
-  }
-
-
-    @ReactMethod
-    public void enableBluetooth(final Promise promise){
-        // If Bluetooth is not on, request that it be enabled.
-        // setupChat() will then be called during onActivityResult
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableIntent = new Intent(
-                    BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            this.reactContext.startActivityForResult(enableIntent, REQUEST_ENABLE_BT, Bundle.EMPTY);
-            try {
-                InvokResult result = resultQueue.take();
-                if(result.isOK()){
-                    promise.resolve(result.getMsg());
-                }else{
-                    promise.reject(result.getMsg(),new Throwable(result.getMsg()));
-                }
-            }catch (Exception e){
-                promise.reject(e.getMessage(),e);
-            }
-            // Otherwise, setup the session
-        } else {
-            if (mService == null){
-                mService = new BluetoothService(reactContext, bluetoothServiceHandler);
-            }
-
-        }
+    public RNBluetoothEscposPrinterModule(ReactApplicationContext reactContext, BluetoothService bluetoothService) {
+        super(reactContext);
+        this.reactContext = reactContext;
+        this.mService = bluetoothService;
+        this.mService.addStateObserver(this);
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public String getName() {
+        return "BluetoothEscposPrinter";
+    }
+
+
+    @Override
+    public
+    @Nullable
+    Map<String, Object> getConstants() {
+        Map<String, Object> constants = new HashMap<>();
+        constants.put("width58", WIDTH_58);
+        constants.put("width80", WIDTH_80);
+        return constants;
+    }
+
+
+    @ReactMethod
+    public void printText(String text, ReadableMap options, Callback cb) {
+        String encoding = options.hasKey("encoding") ? options.getString("encoding") : "GBK";
+        int codepage = options.hasKey("codepage") ? options.getInt("codepage") : 0;
+        int widthTimes = options.hasKey("widthtimes") ? options.getInt("widthtimes") : 0;
+        int heigthTimes = options.hasKey("heigthtimes") ? options.getInt("heigthtimes") : 0;
+        int fonttype = options.hasKey("fonttype") ? options.getInt("fonttype") : 0;
+        byte[] bytes = PrinterCommand.POS_Print_Text(text, encoding, codepage, widthTimes, heigthTimes, fonttype);
+        cb.invoke(sendDataByte(bytes));
+    }
+
+    @ReactMethod
+    public void setWidth(int width) {
+        deviceWidth = width;
+    }
+
+    @ReactMethod
+    public void printPic(String base64encodeStr) {
+        byte[] bytes = Base64.decode(base64encodeStr, Base64.DEFAULT);
+        Bitmap mBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        int nMode = 0;
+        if (mBitmap != null) {
+            /**
+             * Parameters:
+             * mBitmap  要打印的图片
+             * nWidth   打印宽度（58和80）
+             * nMode    打印模式
+             * Returns: byte[]
+             */
+            byte[] data = PrintPicture.POS_PrintBMP(mBitmap, deviceWidth, nMode);
+            //	SendDataByte(buffer);
+            sendDataByte(Command.ESC_Init);
+            sendDataByte(Command.LF);
+            sendDataByte(data);
+            sendDataByte(PrinterCommand.POS_Set_PrtAndFeedPaper(30));
+            sendDataByte(PrinterCommand.POS_Set_Cut(1));
+            sendDataByte(PrinterCommand.POS_Set_PrtInit());
+        }
+    }
+
+
+    @ReactMethod
+    public void selfTest(@Nullable Callback cb) {
+        boolean result = sendDataByte(PrinterCommand.POS_Set_PrtSelfTest());
+        if (cb != null) {
+            cb.invoke(result);
+        }
+    }
+
+    @ReactMethod
+    public void rotate(int rotate) {
+        sendDataByte(PrinterCommand.POS_Set_Rotate(rotate));
+    }
+
+    @ReactMethod
+    public void setBlob(int weight) {
+        sendDataByte(PrinterCommand.POS_Set_Bold(weight));
+    }
+
+    private boolean sendDataString(String data) {
+        if (data.length() > 0) {
+            try {
+                return sendDataByte(data.getBytes("UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean sendDataByte(byte[] data) {
+        if (mService.getState() != BluetoothService.STATE_CONNECTED) {
+            return false;
+        }
+        mService.write(data);
+        return true;
+    }
+
+    @Override
+    public void onBluetoothServiceStateChanged(int state, Map<String, Object> boundle) {
 
     }
 
     /****************************************************************************************************/
-    @SuppressLint("HandlerLeak")
-    private final Handler bluetoothServiceHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MESSAGE_STATE_CHANGE:
-                    Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
-                    switch (msg.arg1) {
-                        case BluetoothService.STATE_CONNECTED:
-                           //// TODO: 2018/9/18  
-                            break;
-                        case BluetoothService.STATE_CONNECTING:
-                            // TODO: 2018/9/18  
-                            break;
-                        case BluetoothService.STATE_LISTEN:
-                        case BluetoothService.STATE_NONE:
-                            // TODO: 2018/9/18
-                            break;
-                    }
-                    break;
-                case MESSAGE_WRITE:
-                    // TODO: 2018/9/18
-                    break;
-                case MESSAGE_READ:
-                    // TODO: 2018/9/18
-                    break;
-                case MESSAGE_DEVICE_NAME:
-                    // save the connected device's name
-                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-                    Toast.makeText(reactContext,
-                            "Connected to " + mConnectedDeviceName,
-                            Toast.LENGTH_SHORT).show();
-                    break;
-                case MESSAGE_TOAST:
-                    Toast.makeText(reactContext,
-                            msg.getData().getString(TOAST), Toast.LENGTH_SHORT)
-                            .show();
-                    break;
-                case MESSAGE_CONNECTION_LOST:    //蓝牙已断开连接
-                    Toast.makeText(reactContext, "Device connection was lost",
-                            Toast.LENGTH_SHORT).show();
-                    break;
-                case MESSAGE_UNABLE_CONNECT:     //无法连接设备
-                    Toast.makeText(reactContext, "Unable to connect device",
-                            Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
-    };
 
-    protected static class InvokResult{
-        public static final int STATUS_OK=1;
-        public static final int STATUS_ERR=0;
-
-        private int status;
-        private String msg;
-
-        public InvokResult(int status, String msg) {
-            this.status = status;
-            this.msg = msg;
-        }
-        public boolean isOK(){
-            return STATUS_OK == this.status;
-        }
-
-        public String getMsg() {
-            return msg;
-        }
-    }
 }

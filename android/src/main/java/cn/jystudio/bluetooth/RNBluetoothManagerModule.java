@@ -1,0 +1,370 @@
+package cn.jystudio.bluetooth;
+
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
+import android.widget.Toast;
+import com.facebook.react.bridge.*;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Created by januslo on 2018/9/22.
+ */
+public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
+        implements ActivityEventListener, BluetoothServiceStateObserver {
+
+    private static final String TAG = "BluetoothManager";
+    private final ReactApplicationContext reactContext;
+    public static final String EVENT_DEVICE_ALREADY_PAIRED = "EVENT_DEVICE_ALREADY_PAIRED";
+    public static final String EVENT_DEVICE_FOUND = "EVENT_DEVICE_FOUND";
+    public static final String EVENT_DEVICE_DISCOVER_DONE = "EVENT_DEVICE_DISCOVER_DONE";
+    public static final String EVENT_CONNECTION_LOST = "EVENT_CONNECTION_LOST";
+    public static final String EVENT_UNABLE_CONNECT = "EVENT_UNABLE_CONNECT";
+    public static final String EVENT_CONNECTED = "EVENT_CONNECTED";
+
+
+    // Intent request codes
+    private static final int REQUEST_CONNECT_DEVICE = 1;
+    private static final int REQUEST_ENABLE_BT = 2;
+
+    public static final int MESSAGE_STATE_CHANGE = BluetoothService.MESSAGE_STATE_CHANGE;
+    public static final int MESSAGE_READ = BluetoothService.MESSAGE_READ;
+    public static final int MESSAGE_WRITE = BluetoothService.MESSAGE_WRITE;
+    public static final int MESSAGE_DEVICE_NAME = BluetoothService.MESSAGE_DEVICE_NAME;
+
+    public static final int MESSAGE_CONNECTION_LOST = BluetoothService.MESSAGE_CONNECTION_LOST;
+    public static final int MESSAGE_UNABLE_CONNECT = BluetoothService.MESSAGE_UNABLE_CONNECT;
+    public static final String DEVICE_NAME = BluetoothService.DEVICE_NAME;
+    public static final String TOAST = BluetoothService.TOAST;
+
+    // Return Intent extra
+    public static String EXTRA_DEVICE_ADDRESS = "device_address";
+
+    private static final Map<String, Promise> promiseMap = Collections.synchronizedMap(new HashMap<String, Promise>());
+    private static final String PROMISE_ENABLE_BT = "ENABLE_BT";
+    private static final String PROMISE_SCAN = "SCAN";
+    private static final String PROMISE_CONNECT = "CONNECT";
+
+    private JSONArray pairedDeivce = new JSONArray();
+    private JSONArray foundDevice = new JSONArray();
+    // Name of the connected device
+    private String mConnectedDeviceName = null;
+    // Local Bluetooth adapter
+    private BluetoothAdapter mBluetoothAdapter = null;
+    // Member object for the services
+    private BluetoothService mService = null;
+
+    public RNBluetoothManagerModule(ReactApplicationContext reactContext, BluetoothService bluetoothService) {
+        super(reactContext);
+        this.reactContext = reactContext;
+        this.reactContext.addActivityEventListener(this);
+        this.mService = bluetoothService;
+        this.mService.addStateObserver(this);
+        // Register for broadcasts when a device is discovered
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        this.reactContext.registerReceiver(discoverReceiver, filter);
+
+        // Get local Bluetooth adapter
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+
+        // If the adapter is null, then Bluetooth is not supported
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(this.reactContext, "Bluetooth is not available",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public
+    @Nullable
+    Map<String, Object> getConstants() {
+        Map<String, Object> constants = new HashMap<>();
+        constants.put(EVENT_DEVICE_ALREADY_PAIRED, EVENT_DEVICE_ALREADY_PAIRED);
+        constants.put(EVENT_DEVICE_DISCOVER_DONE, EVENT_DEVICE_DISCOVER_DONE);
+        constants.put(EVENT_DEVICE_FOUND, EVENT_DEVICE_FOUND);
+        constants.put(EVENT_CONNECTION_LOST, EVENT_CONNECTION_LOST);
+        constants.put(EVENT_UNABLE_CONNECT, EVENT_UNABLE_CONNECT);
+        constants.put(EVENT_CONNECTED, EVENT_CONNECTED);
+        constants.put(DEVICE_NAME, DEVICE_NAME);
+        return constants;
+    }
+
+
+    @ReactMethod
+    public void enableBluetooth(final Promise promise) {
+        // If Bluetooth is not on, request that it be enabled.
+        // setupChat() will then be called during onActivityResult
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableIntent = new Intent(
+                    BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            promiseMap.put(PROMISE_ENABLE_BT, promise);
+            this.reactContext.startActivityForResult(enableIntent, REQUEST_ENABLE_BT, Bundle.EMPTY);
+        } else {
+            promise.resolve("ok");
+        }
+    }
+
+    @ReactMethod
+    public void disableBluetooth(@Nullable Callback cb) {
+        if (mService != null && mService.getState() != BluetoothService.STATE_NONE) {
+            mService.stop();
+        }
+        cb.invoke(!mBluetoothAdapter.isEnabled() || mBluetoothAdapter.disable());
+
+    }
+
+    @ReactMethod
+    public void isBluetoothEnabled(Callback cb) {
+        cb.invoke(mBluetoothAdapter.isEnabled());
+    }
+
+    @ReactMethod
+    public void scanDevices(final Promise promise) {
+        cancelDisCovery();
+        int permissionChecked = ContextCompat.checkSelfPermission(reactContext, android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        if (permissionChecked == PackageManager.PERMISSION_DENIED) {
+            // // TODO: 2018/9/21
+            ActivityCompat.requestPermissions(reactContext.getCurrentActivity(),
+                    new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                    1);
+        }
+
+
+        pairedDeivce = new JSONArray();
+        foundDevice = new JSONArray();
+        Set<BluetoothDevice> boundDevices = mBluetoothAdapter.getBondedDevices();
+        for (BluetoothDevice d : boundDevices) {
+            try {
+                JSONObject obj = new JSONObject();
+                obj.put("name", d.getName());
+                obj.put("address", d.getAddress());
+                pairedDeivce.put(obj);
+            } catch (Exception e) {
+                //ignore.
+            }
+        }
+
+        WritableMap params = Arguments.createMap();
+        params.putString("devices", pairedDeivce.toString());
+        emitRNEvent(EVENT_DEVICE_ALREADY_PAIRED, params);
+        if (!mBluetoothAdapter.startDiscovery()) {
+            promise.reject("DISCOVER", "NOT_STARTED");
+            cancelDisCovery();
+        } else {
+            promiseMap.put(PROMISE_SCAN, promise);
+        }
+    }
+
+    @ReactMethod
+    public void connect(String address, final Promise promise) {
+        if (mBluetoothAdapter.isEnabled()) {
+            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+            mService.connect(device);
+            promiseMap.put(PROMISE_CONNECT, promise);
+        } else {
+            promise.reject("BT NOT ENABLED");
+        }
+
+    }
+
+    private void cancelDisCovery() {
+        try {
+            if (mBluetoothAdapter.isDiscovering()) {
+                mBluetoothAdapter.cancelDiscovery();
+            }
+            Log.d(TAG, "Discover canceled");
+        } catch (Exception e) {
+            //ignore
+        }
+    }
+
+
+    @Override
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult " + resultCode);
+        switch (requestCode) {
+            case REQUEST_CONNECT_DEVICE: {
+                // When DeviceListActivity returns with a device to connect
+                if (resultCode == Activity.RESULT_OK) {
+                    // Get the device MAC address
+                    String address = data.getExtras().getString(
+                            EXTRA_DEVICE_ADDRESS);
+                    // Get the BLuetoothDevice object
+                    if (BluetoothAdapter.checkBluetoothAddress(address)) {
+                        BluetoothDevice device = mBluetoothAdapter
+                                .getRemoteDevice(address);
+                        // Attempt to connect to the device
+                        mService.connect(device);
+                    }
+                }
+                break;
+            }
+            case REQUEST_ENABLE_BT: {
+                Promise promise = promiseMap.remove(PROMISE_ENABLE_BT);
+                // When the request to enable Bluetooth returns
+                if (resultCode == Activity.RESULT_OK && promise != null) {
+                    // Bluetooth is now enabled, so set up a session
+                    promise.resolve(null);
+
+                } else {
+                    // User did not enable Bluetooth or an error occured
+                    Log.d(TAG, "BT not enabled");
+                    if (promise != null) {
+                        promise.reject("ERR", new Exception("BT NOT ENABLED"));
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+
+    }
+
+    @Override
+    public String getName() {
+        return "BluetoothManager";
+    }
+
+
+    private boolean objectFound(JSONObject obj) {
+        boolean found = false;
+        if (foundDevice.length() > 0) {
+            for (int i = 0; i < foundDevice.length(); i++) {
+                try {
+                    String objAddress = obj.optString("address", "objAddress");
+                    String dsAddress = ((JSONObject) foundDevice.get(i)).optString("address", "dsAddress");
+                    if (objAddress.equalsIgnoreCase(dsAddress)) {
+                        found = true;
+                        break;
+                    }
+                } catch (Exception e) {
+                }
+            }
+        }
+        return found;
+    }
+
+    // The BroadcastReceiver that listens for discovered devices and
+    // changes the title when discovery is finished
+    private final BroadcastReceiver discoverReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Log.d(TAG, "on receive:" + action);
+            // When discovery finds a device
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    JSONObject deviceFound = new JSONObject();
+                    try {
+                        deviceFound.put("name", device.getName());
+                        deviceFound.put("address", device.getAddress());
+                    } catch (Exception e) {
+                        //ignore
+                    }
+                    if (!objectFound(deviceFound)) {
+                        foundDevice.put(deviceFound);
+                        WritableMap params = Arguments.createMap();
+                        params.putString("device", deviceFound.toString());
+                        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                                .emit(EVENT_DEVICE_FOUND, params);
+                    }
+
+                }
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                Promise promise = promiseMap.remove(PROMISE_SCAN);
+                if (promise != null) {
+
+                    JSONObject result = null;
+                    try {
+                        result = new JSONObject();
+                        result.put("paired", pairedDeivce);
+                        result.put("found", foundDevice);
+                        promise.resolve(result.toString());
+                    } catch (Exception e) {
+                        //ignore
+                    }
+                    WritableMap params = Arguments.createMap();
+                    params.putString("paired", pairedDeivce.toString());
+                    params.putString("found", foundDevice.toString());
+                    emitRNEvent(EVENT_DEVICE_DISCOVER_DONE, params);
+                }
+            }
+        }
+    };
+
+    private void emitRNEvent(String event, @Nullable WritableMap params) {
+        getReactApplicationContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(event, params);
+    }
+
+    @Override
+    public void onBluetoothServiceStateChanged(int state, Map<String, Object> bundle) {
+        switch (state) {
+            case BluetoothService.STATE_CONNECTED:
+            case MESSAGE_DEVICE_NAME: {
+                // save the connected device's name
+                mConnectedDeviceName = (String) bundle.get(DEVICE_NAME);
+                Promise p = promiseMap.remove(PROMISE_CONNECT);
+                if (p == null) {
+                    WritableMap params = Arguments.createMap();
+                    params.putString(DEVICE_NAME, mConnectedDeviceName);
+                    emitRNEvent(EVENT_CONNECTED, params);
+                } else {
+                    p.resolve(mConnectedDeviceName);
+                }
+
+                break;
+            }
+            case MESSAGE_CONNECTION_LOST: {
+                Promise p = promiseMap.remove(PROMISE_CONNECT);
+                if (p == null) {
+                    emitRNEvent(EVENT_CONNECTION_LOST, null);
+                } else {
+                    p.reject("Device connection was lost");
+                }
+                break;
+            }
+            case MESSAGE_UNABLE_CONNECT: {     //无法连接设备
+                Promise p = promiseMap.remove(PROMISE_CONNECT);
+                if (p == null) {
+                    emitRNEvent(EVENT_UNABLE_CONNECT, null);
+                } else {
+                    p.reject("Unable to connect device");
+                }
+
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
