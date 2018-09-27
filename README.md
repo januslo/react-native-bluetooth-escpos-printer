@@ -28,7 +28,7 @@ Link the plugin to your RN project
 react-native link react-native-bluetooth-escpos-printer
 ```
 
-Or you may need to link manually.
+Or you may need to link manually. 
 //TODO: manually link guilds.
 
 ### Step3 ###
@@ -42,7 +42,7 @@ Refers to your JS files
 ### BluetoothManager ###
 BluetoothManager is the module that for Bluetooth service management, supports Bluetooth status check, enable/disable Bluetooth service,scan devices,connect/unpaire devices.
 
-* isBluetoothEnabled 
+* isBluetoothEnabled ==>
 async function, check whether Bluetooth service is enabled.
 //TODO: consider to return the the devices information already bound and paired here..
 
@@ -54,7 +54,7 @@ async function, check whether Bluetooth service is enabled.
             });
 ```
 
-* enableBluetooth
+* enableBluetooth ==>
 async function, enable the bluetooth service, returns the devices information already bound and paired.
 
 ```javascript
@@ -75,7 +75,7 @@ BluetoothManager.enableBluetooth().then((r)=>{
            });
 ```
 
-* disableBluetooth
+* disableBluetooth ==>
 async function ,disable the bluetooth service.
 
 ```javascript
@@ -84,7 +84,7 @@ BluetoothManager.disableBluetooth().then(()=>{
           },(err)=>{alert(err)});
 ```
 
-* scanDevices
+* scanDevices ==>
 async function , scans the bluetooth devices, returns devices found and pared after scan finish. Event [BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED] would be emitted with devices bound; event [BluetoothManager.EVENT_DEVICE_FOUND] would be emitted (many time) as long as new devices found.
 
 samples with events:
@@ -120,7 +120,7 @@ BluetoothManager.scanDevices()
             });
 ```
 
-* connect
+* connect ==>
 async function, connect the specified devices, if not bound, bound dailog promps.
 
 ```javascript
@@ -140,7 +140,7 @@ async function, connect the specified devices, if not bound, bound dailog promps
     
 ```
 
-* unpaire
+* unpaire ==>
 async function, disconnect and unpaire the specified devices
 
 ```javascript
@@ -167,7 +167,7 @@ async function, disconnect and unpaire the specified devices
 ### BluetoothTscPrinter ###
 The printer for label printing.
 
-* printLabel
+* printLabel ==>
 async function the perform label print action.
 
 ```javascript
