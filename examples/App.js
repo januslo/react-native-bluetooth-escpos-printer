@@ -9,12 +9,12 @@
  * @flow
  */
 
- import React, {Component} from 'react';
- import {ActivityIndicator,Platform, StyleSheet, Text, View,Image,Button,NativeModules,ListView,DeviceEventEmitter,Switch} from 'react-native';
- import {BluetoothManager,BluetoothEscposPrinter,BluetoothTscPrinter} from 'react-native-bluetooth-escpos-printer';
+import React, {Component} from 'react';
+import {ActivityIndicator,Platform, StyleSheet, Text, View,Image,Button,NativeModules,ListView,DeviceEventEmitter,Switch} from 'react-native';
+import {BluetoothManager,BluetoothEscposPrinter,BluetoothTscPrinter} from 'react-native-bluetooth-escpos-printer';
 
 
- var dateFormat = require('dateformat');
+var dateFormat = require('dateformat');
 
 //获取屏幕信息
 var Dimensions = require('Dimensions');
@@ -36,24 +36,30 @@ export default class App extends Component {
             pairedDs: ds.cloneWithRows([]),
             foundDs: ds.cloneWithRows([]),
             bleOpend: false,
-            loading:true,
-            boundAddress:'',
-            debugMsg:''
+            loading: true,
+            boundAddress: '',
+            debugMsg: ''
         }
     }
 
     componentDidMount() {//alert(BluetoothManager)
-    	BluetoothManager.isBluetoothEnabled().then((enabled)=> {
+        BluetoothManager.isBluetoothEnabled().then((enabled)=> {
             this.setState({
                 bleOpend: enabled,
-                loading:false
+                loading: false
             })
-        },(err)=>{err});
+        }, (err)=> {
+            err
+        });
 
         this._listeners.push(DeviceEventEmitter.addListener(
-            BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED, (rsp)=>{this._deviceAlreadPaired(rsp)}));
+            BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED, (rsp)=> {
+                this._deviceAlreadPaired(rsp)
+            }));
         this._listeners.push(DeviceEventEmitter.addListener(
-            BluetoothManager.EVENT_DEVICE_FOUND, (rsp)=>{this._deviceFoundEvent(rsp)}));
+            BluetoothManager.EVENT_DEVICE_FOUND, (rsp)=> {
+                this._deviceFoundEvent(rsp)
+            }));
     }
 
     componentWillUnmount() {
@@ -64,37 +70,38 @@ export default class App extends Component {
     }
 
     _deviceAlreadPaired(rsp) {
-    	var ds = null;
-    	try{
-    		ds = JSON.parse(rsp.devices);
-    	}catch(e){}
-    	this.paired = ds || []
+        var ds = null;
+        try {
+            ds = JSON.parse(rsp.devices);
+        } catch (e) {
+        }
+        this.paired = ds || []
         this.setState({
             pairedDs: this.state.pairedDs.cloneWithRows(this.paired)
         });
     }
 
     _deviceFoundEvent(rsp) {
-    	var r= null;
-    	try{
-    		r = JSON.parse(rsp.device);
-    	}catch(e){
-    		//ignore
-    	}
-    	if(r){
-    		if(!this.found) this.found = [];
-           this.found.push(r);
-           this.setState({
-               foundDs: this.state.foundDs.cloneWithRows(this.found)
-           });
-       }
-   }
+        var r = null;
+        try {
+            r = JSON.parse(rsp.device);
+        } catch (e) {
+            //ignore
+        }
+        if (r) {
+            if (!this.found) this.found = [];
+            this.found.push(r);
+            this.setState({
+                foundDs: this.state.foundDs.cloneWithRows(this.found)
+            });
+        }
+    }
 
-   render() {
-    return (
-        <View style={styles.container}>
-        <Text>{this.state.debugMsg}</Text>
-        <Text>Blutooth Opended:</Text><Switch value={this.state.bleOpend} onValueChange={(v)=>{
+    render() {
+        return (
+            <View style={styles.container}>
+                <Text>{this.state.debugMsg}</Text>
+                <Text>Blutooth Opended:</Text><Switch value={this.state.bleOpend} onValueChange={(v)=>{
            this.setState({
               loading:true
           })
@@ -134,12 +141,15 @@ export default class App extends Component {
                alert(err)
            });
         }
-    }} />
-    <Text>Connected:{!this.state.name ? 'No Devices' : this.state.name}</Text>
-    {this.state.bleOpend ? (<Button disabled={this.state.loading} onPress={()=>{this._scan()}} title="scan"/>) :
-    <Text>Open BLE first</Text>}
-    {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Self Test" onPress={()=>{this._selfTest()}} />):null}
-    {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Print Label" onPress={()=>{
+    }}/>
+                <Text>Connected:{!this.state.name ? 'No Devices' : this.state.name}</Text>
+                {this.state.bleOpend ? (
+                    <Button disabled={this.state.loading} onPress={()=>{this._scan()}} title="scan"/>) :
+                    <Text>Open BLE first</Text>}
+                {this.state.bleOpend && this.state.boundAddress.length > 0 ? (
+                    <Button disabled={this.state.loading} title="Self Test" onPress={()=>{this._selfTest()}}/>) : null}
+                {this.state.bleOpend && this.state.boundAddress.length > 0 ? (
+                    <Button disabled={this.state.loading} title="Print Label" onPress={()=>{
                  	//this._printText('show me the money')
                      BluetoothTscPrinter.printLabel(
                      {
@@ -174,9 +184,10 @@ export default class App extends Component {
                     ).then(()=>{alert("done")},(err)=>{alert(err)});
 
                  }
-             } />):null}
+             }/>) : null}
 
-    {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Print Receipt" onPress={async ()=>{
+                {this.state.bleOpend && this.state.boundAddress.length > 0 ? (
+                    <Button disabled={this.state.loading} title="Print Receipt" onPress={async ()=>{
       await BluetoothEscposPrinter.printerInit();
       await BluetoothEscposPrinter.printerLeftSpace(0);
       await BluetoothEscposPrinter.printBarCode("123456789012", BluetoothEscposPrinter.BARCODETYPE.UPC_A, 3, 168, 0, 2);
@@ -240,19 +251,23 @@ export default class App extends Component {
         [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.RIGHT],
         ["商品",'数量','单价','金额'],{});
       await BluetoothEscposPrinter.printColumn(columnWidths,
-        [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.RIGHT],
-        ["React-Native定制开发",'1.00套','32000.00','32000.00'],{});
+        [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.RIGHT],
+        ["React-Native定制开发我是比较长的位置你稍微看看是不是这样?",'1','32000','32000'],{});
+          await  BluetoothEscposPrinter.printText("\n\r",{});
+        await BluetoothEscposPrinter.printColumn(columnWidths,
+        [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.RIGHT],
+        ["React-Native定制开发我是比较长的位置你稍微看看是不是这样?",'1','32000','32000'],{});
       await  BluetoothEscposPrinter.printText("\n\r",{});
       await  BluetoothEscposPrinter.printText("--------------------------------\n\r",{});
-      await BluetoothEscposPrinter.printColumn([12,12,8],
+      await BluetoothEscposPrinter.printColumn([12,8,12],
         [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.RIGHT],
-        ["合计",'1.00','32000.00'],{});
+        ["合计",'2','64000'],{});
       await  BluetoothEscposPrinter.printText("\n\r",{});
       await  BluetoothEscposPrinter.printText("折扣率：100%\n\r",{});
-      await  BluetoothEscposPrinter.printText("折扣后应收：32000.00\n\r",{});
+      await  BluetoothEscposPrinter.printText("折扣后应收：64000.00\n\r",{});
       await  BluetoothEscposPrinter.printText("会员卡支付：0.00\n\r",{});
       await  BluetoothEscposPrinter.printText("积分抵扣：0.00\n\r",{});
-      await  BluetoothEscposPrinter.printText("支付金额：32000.00\n\r",{});
+      await  BluetoothEscposPrinter.printText("支付金额：64000.00\n\r",{});
       await  BluetoothEscposPrinter.printText("结算账户：现金账户\n\r",{});
       await  BluetoothEscposPrinter.printText("备注：无\n\r",{});
       await  BluetoothEscposPrinter.printText("快递单号：无\n\r",{});
@@ -265,12 +280,13 @@ export default class App extends Component {
       await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
 
 
-  }} />):null}
+  }}/>) : null}
 
-<Text>Found:</Text>
-{this.state.loading?(<ActivityIndicator animating={true}  />):null}
-<ListView style={{width:width,height:height/3}} enableEmptySections={true} dataSource={this.state.foundDs}
-renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
+                <Text>Found:</Text>
+                {this.state.loading ? (<ActivityIndicator animating={true}/>) : null}
+                <ListView style={{width:width,height:height/3}} enableEmptySections={true}
+                          dataSource={this.state.foundDs}
+                          renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
  this.setState({
      loading:true
  });
@@ -288,10 +304,11 @@ renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()
 })
 
 }}>{rowData.name||rowData.address}</Text>}/>
-<Text>Paired:</Text>
-{this.state.loading?(<ActivityIndicator animating={true}  />):null}
-<ListView  style={{width:width,height:height/3}} enableEmptySections={true} dataSource={this.state.pairedDs}
-renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
+                <Text>Paired:</Text>
+                {this.state.loading ? (<ActivityIndicator animating={true}/>) : null}
+                <ListView style={{width:width,height:height/3}} enableEmptySections={true}
+                          dataSource={this.state.pairedDs}
+                          renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
  this.setState({
      loading:true
  });
@@ -311,43 +328,45 @@ renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()
 })
 
 }}>{rowData.name||rowData.address}</Text>}/>
-</View>
-);
-}
-_selfTest(){
-   this.setState({
-      loading:true
-  },()=>{
-      BluetoothEscposPrinter.selfTest(()=>{});
+            </View>
+        );
+    }
 
-      this.setState({
-        loading:false
-    })
-})
-}
+    _selfTest() {
+        this.setState({
+            loading: true
+        }, ()=> {
+            BluetoothEscposPrinter.selfTest(()=> {
+            });
 
-_scan() {
-   this.setState({
-      loading:true
-  })
-  BluetoothManager.scanDevices()
-  .then((s)=> {
-    var ss = JSON.parse(s);
-    this.setState({
-        pairedDs: this.state.pairedDs.cloneWithRows(ss.paired || []),
-        foundDs: this.state.foundDs.cloneWithRows(ss.found || []),
-        loading:false
-    },()=>{
-       this.paired = ss.paired||[];
-       this.found = ss.found ||[];
-   });
-}, (er)=> {
-   this.setState({
-      loading:false
-  })
-  alert('error' + JSON.stringify(er));
-});
-}
+            this.setState({
+                loading: false
+            })
+        })
+    }
+
+    _scan() {
+        this.setState({
+            loading: true
+        })
+        BluetoothManager.scanDevices()
+            .then((s)=> {
+                var ss = JSON.parse(s);
+                this.setState({
+                    pairedDs: this.state.pairedDs.cloneWithRows(ss.paired || []),
+                    foundDs: this.state.foundDs.cloneWithRows(ss.found || []),
+                    loading: false
+                }, ()=> {
+                    this.paired = ss.paired || [];
+                    this.found = ss.found || [];
+                });
+            }, (er)=> {
+                this.setState({
+                    loading: false
+                })
+                alert('error' + JSON.stringify(er));
+            });
+    }
 }
 
 const styles = StyleSheet.create({
