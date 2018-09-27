@@ -1,7 +1,6 @@
 package cn.jystudio.bluetooth;
 
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -11,9 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -24,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -124,22 +121,33 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
             promiseMap.put(PROMISE_ENABLE_BT, promise);
             this.reactContext.startActivityForResult(enableIntent, REQUEST_ENABLE_BT, Bundle.EMPTY);
         } else {
-            promise.resolve("ok");
+            WritableArray pairedDeivce =Arguments.createArray();
+            Set<BluetoothDevice> boundDevices = mBluetoothAdapter.getBondedDevices();
+            for (BluetoothDevice d : boundDevices) {
+                try {
+                    JSONObject obj = new JSONObject();
+                    obj.put("name", d.getName());
+                    obj.put("address", d.getAddress());
+                    pairedDeivce.pushString(obj.toString());
+                } catch (Exception e) {
+                    //ignore.
+                }
+            }
+            promise.resolve(pairedDeivce);
         }
     }
 
     @ReactMethod
-    public void disableBluetooth(@Nullable Callback cb) {
+    public void disableBluetooth(final Promise promise) {
         if (mService != null && mService.getState() != BluetoothService.STATE_NONE) {
             mService.stop();
         }
-        cb.invoke(!mBluetoothAdapter.isEnabled() || mBluetoothAdapter.disable());
-
+        promise.resolve(!mBluetoothAdapter.isEnabled() || mBluetoothAdapter.disable());
     }
 
     @ReactMethod
-    public void isBluetoothEnabled(Callback cb) {
-        cb.invoke(mBluetoothAdapter.isEnabled());
+    public void isBluetoothEnabled(final Promise promise) {
+        promise.resolve(mBluetoothAdapter!=null && mBluetoothAdapter.isEnabled());
     }
 
     @ReactMethod
@@ -191,6 +199,28 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
 
     }
 
+    @ReactMethod
+    public void unpaire(String address,final Promise promise){
+        if (mBluetoothAdapter.isEnabled()) {
+            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+            this.unpairDevice(device);
+            promise.resolve(address);
+        } else {
+            promise.reject("BT NOT ENABLED");
+        }
+
+    }
+
+    private void unpairDevice(BluetoothDevice device) {
+        try {
+            Method m = device.getClass()
+                    .getMethod("removeBond", (Class[]) null);
+            m.invoke(device, (Object[]) null);
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
     private void cancelDisCovery() {
         try {
             if (mBluetoothAdapter.isDiscovering()) {
@@ -228,7 +258,23 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
                 // When the request to enable Bluetooth returns
                 if (resultCode == Activity.RESULT_OK && promise != null) {
                     // Bluetooth is now enabled, so set up a session
-                    promise.resolve(null);
+                    if(mBluetoothAdapter!=null){
+                        WritableArray pairedDeivce =Arguments.createArray();
+                        Set<BluetoothDevice> boundDevices = mBluetoothAdapter.getBondedDevices();
+                        for (BluetoothDevice d : boundDevices) {
+                            try {
+                                JSONObject obj = new JSONObject();
+                                obj.put("name", d.getName());
+                                obj.put("address", d.getAddress());
+                                pairedDeivce.pushString(obj.toString());
+                            } catch (Exception e) {
+                                //ignore.
+                            }
+                        }
+                        promise.resolve(pairedDeivce);
+                    }else{
+                        promise.resolve(null);
+                    }
 
                 } else {
                     // User did not enable Bluetooth or an error occured

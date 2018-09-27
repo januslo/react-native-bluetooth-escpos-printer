@@ -105,7 +105,7 @@ public class PrinterCommand {
     public static byte[] POS_Set_Absolute(int absolute) {
         if (absolute > 65535 | absolute < 0) return null;
 
-        byte[] data = Arrays.copyOf(Command.ESC_Relative, Command.ESC_Relative.length);
+        byte[] data = Arrays.copyOf(Command.ESC_Absolute, Command.ESC_Absolute.length);
         data[2] = (byte) (absolute % 0x100);
         data[3] = (byte) (absolute / 0x100);
         return data;
@@ -120,7 +120,7 @@ public class PrinterCommand {
     public static byte[] POS_Set_Relative(int relative) {
         if (relative < 0 | relative > 65535) return null;
 
-        byte[] data = Arrays.copyOf(Command.ESC_Absolute, Command.ESC_Absolute.length);
+        byte[] data = Arrays.copyOf(Command.ESC_Relative, Command.ESC_Relative.length);
         data[2] = (byte) (relative % 0x100);
         data[3] = (byte) (relative / 0x100);
         return data;
@@ -148,7 +148,7 @@ public class PrinterCommand {
      * @return
      */
     public static byte[] POS_S_Align(int align) {
-        if ((align < 0 || align > 2) | (align < 48 || align > 50)) return null;
+        if ((align < 0 || align > 2) && (align < 48 || align > 50)) return null;
 
         byte[] data = Arrays.copyOf(Command.ESC_Align, Command.ESC_Align.length);
         data[2] = (byte) align;
@@ -481,6 +481,7 @@ public class PrinterCommand {
         System.arraycopy(strData, 0, command, 9, strData.length);
         return command;
     }
+
 //**********************************************************************************************************//
 
     public static byte[] concatAll(byte[] first, byte[]... rest) {

@@ -31,11 +31,6 @@ implements BluetoothServiceStateObserver{
 
     @ReactMethod
     public void printLabel(final ReadableMap options, final Promise promise) {
-        if (!options.hasKey("address") || options.getString("address") == "") {
-            promise.reject("INVALID_PARAMS", "Invalid params: address is required.");
-            return;
-        }
-        String address = options.getString("address");//蓝牙地址
         int width = options.getInt("width");
         int height = options.getInt("height");
         int gap = options.hasKey("gap") ? options.getInt("gap") : 0;
@@ -174,7 +169,11 @@ implements BluetoothServiceStateObserver{
         for(int i=0;i<bytes.size();i++){
             tosend[i]= bytes.get(i);
         }
-        sendDataByte(tosend);
+        if(sendDataByte(tosend)){
+            promise.resolve(null);
+        }else{
+            promise.reject("COMMAND_SEND_ERROR");
+        }
     }
 
     private TscCommand.BARCODETYPE findBarcodeType(String type) {

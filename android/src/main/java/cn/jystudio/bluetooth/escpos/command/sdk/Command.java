@@ -107,10 +107,10 @@ public class Command {
 	//设置绝对打印位置
 	//将当前位置设置到距离行首（nL + nH x 256）处。
 	//如果设置位置在指定打印区域外，该命令被忽略
-	public static byte[] ESC_Relative = new byte[] {ESC, '$', 0x00, 0x00 };
+	public static byte[] ESC_Absolute  = new byte[] {ESC, '$', 0x00, 0x00 };
 	
 	//设置相对打印位置
-	public static byte[] ESC_Absolute = new byte[] {ESC, 92, 0x00, 0x00 };
+	public static byte[] ESC_Relative = new byte[] {ESC, 92, 0x00, 0x00 };
 	
 	//设置打印区域宽度
 	public static byte[] GS_W = new byte[] {GS, 'W', 0x00, 0x00 };

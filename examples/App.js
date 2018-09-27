@@ -9,10 +9,12 @@
  * @flow
  */
 
-import React, {Component} from 'react';
-import {ActivityIndicator,Platform, StyleSheet, Text, View,Image,Button,NativeModules,ListView,DeviceEventEmitter,Switch} from 'react-native';
-import {BluetoothManager,BluetoothEscposPrinter,BluetoothTscPrinter} from 'react-native-bluetooth-escpos-printer';
+ import React, {Component} from 'react';
+ import {ActivityIndicator,Platform, StyleSheet, Text, View,Image,Button,NativeModules,ListView,DeviceEventEmitter,Switch} from 'react-native';
+ import {BluetoothManager,BluetoothEscposPrinter,BluetoothTscPrinter} from 'react-native-bluetooth-escpos-printer';
 
+
+ var dateFormat = require('dateformat');
 
 //获取屏幕信息
 var Dimensions = require('Dimensions');
@@ -41,12 +43,12 @@ export default class App extends Component {
     }
 
     componentDidMount() {//alert(BluetoothManager)
-    	BluetoothManager.isBluetoothEnabled((enabled)=> {
+    	BluetoothManager.isBluetoothEnabled().then((enabled)=> {
             this.setState({
                 bleOpend: enabled,
                 loading:false
             })
-        });
+        },(err)=>{err});
 
         this._listeners.push(DeviceEventEmitter.addListener(
             BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED, (rsp)=>{this._deviceAlreadPaired(rsp)}));
@@ -81,170 +83,271 @@ export default class App extends Component {
     	}
     	if(r){
     		if(!this.found) this.found = [];
-	        this.found.push(r);
-	        this.setState({
-	            foundDs: this.state.foundDs.cloneWithRows(this.found)
-	        });
-    	}
-    }
+           this.found.push(r);
+           this.setState({
+               foundDs: this.state.foundDs.cloneWithRows(this.found)
+           });
+       }
+   }
 
-    render() {
-        return (
-            <View style={styles.container}>
-            <Text>{this.state.debugMsg}</Text>
-                <Text>Blutooth Opended:</Text><Switch value={this.state.bleOpend} onValueChange={(v)=>{
-                	this.setState({
-                		loading:true
-                	})
-                if(!v){
-                    BluetoothManager.disableBluetooth(()=>{
-                    	 this.setState({
-                        	bleOpend:false,
-                        	loading:false,
-                        	foundDs:this.state.foundDs.cloneWithRows([]),
-                        	pairedDs:this.state.pairedDs.cloneWithRows([])
-                        });
-                    	 this.paired = [];
-                    	 this.found = [];
-                    });
-                    
-                }else{
-                    BluetoothManager.enableBluetooth().then((r)=>{
-                        this.setState({
-                             bleOpend:true,
-                             loading:false
-                        })
-                        },(err)=>{
-                        	this.setState({
-                        		loading:false
-                        	})
-                        	alert(err)
-                        });
+   render() {
+    return (
+        <View style={styles.container}>
+        <Text>{this.state.debugMsg}</Text>
+        <Text>Blutooth Opended:</Text><Switch value={this.state.bleOpend} onValueChange={(v)=>{
+           this.setState({
+              loading:true
+          })
+           if(!v){
+            BluetoothManager.disableBluetooth().then(()=>{
+              this.setState({
+               bleOpend:false,
+               loading:false,
+               foundDs:this.state.foundDs.cloneWithRows([]),
+               pairedDs:this.state.pairedDs.cloneWithRows([])
+           });
+              this.paired = [];
+              this.found = [];
+          },(err)=>{alert(err)});
+
+        }else{
+            BluetoothManager.enableBluetooth().then((r)=>{
+                var paired = [];
+                if(r && r.length>0){
+                    for(var i=0;i<r.length;i++){
+                        try{
+                            paired.push(JSON.parse(r[i]));
+                        }catch(e){
+                            //ignore
+                        }
+                    }
                 }
-                }} />
-                <Text>Connected:{!this.state.name ? 'No Devices' : this.state.name}</Text>
-                {this.state.bleOpend ? (<Button disabled={this.state.loading} onPress={()=>{this._scan()}} title="scan"/>) :
-                    <Text>Open BLE first</Text>}
-                    {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Self Test" onPress={()=>{this._selfTest()}} />):null}
-                 {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Print Text" onPress={()=>{
-                 	//this._printText('show me the money')
-                 	 BluetoothTscPrinter.printLabel(
- {
-                width: 40,
-                height: 30,
-                gap: 20,
-                direction: BluetoothTscPrinter.DIRECTION.FORWARD,
-                reference: [0, 0],
-                tear: BluetoothTscPrinter.TEAR.ON,
-                sound: 0,
-                address: this.state.boundAddress,
-                text: [{
-                    text: 'I am a testing txt',
-                    x: 20,
-                    y: 0,
-                    fonttype: BluetoothTscPrinter.FONTTYPE.SIMPLIFIED_CHINESE,
-                    rotation: BluetoothTscPrinter.ROTATION.ROTATION_0,
-                    xscal:BluetoothTscPrinter.FONTMUL.MUL_1,
-                    yscal: BluetoothTscPrinter.FONTMUL.MUL_1
-                },{
-                    text: '你在说什么呢?',
-                    x: 20,
-                    y: 50,
-                    fonttype: BluetoothTscPrinter.FONTTYPE.SIMPLIFIED_CHINESE,
-                    rotation: BluetoothTscPrinter.ROTATION.ROTATION_0,
-                    xscal:BluetoothTscPrinter.FONTMUL.MUL_1,
-                    yscal: BluetoothTscPrinter.FONTMUL.MUL_1
-                }],
-                qrcode: [{x: 20, y: 96, level: BluetoothTscPrinter.EEC.LEVEL_L, width: 3, rotation: BluetoothTscPrinter.ROTATION.ROTATION_0, code: 'show me the money'}],
-                barcode: [{x: 120, y:96, type: BluetoothTscPrinter.BARCODETYPE.CODE128, height: 40, readabel: 1, rotation: BluetoothTscPrinter.ROTATION.ROTATION_0, code: '1234567890'}],
-              image: [{x: 160, y: 160, mode: BluetoothTscPrinter.BITMAP_MODE.OVERWRITE,width: 60,image: base64Image}]
-            }
-                 	 	);
-                 	 alert(1);
-                 }
-                 } />):null}
-
-                <Text>Found:</Text>
-                    {this.state.loading?(<ActivityIndicator animating={true}  />):null}
-                <ListView style={{width:width,height:height/3}} enableEmptySections={true} dataSource={this.state.foundDs}
-                          renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
-                           this.setState({
-    							loading:true
-    						});
-                            BluetoothManager.connect(rowData.address)
-                            .then((s)=>{
-                            	this.setState({
-    								loading:false,
-    								boundAddress:rowD.address
-    							})
-                            },(e)=>{
-                            	this.setState({
-    							loading:false
-    								})
-                           		 alert(e);
-                            })
-
-                          }}>{rowData.name||rowData.address}</Text>}/>
-                <Text>Paired:</Text>
-                    {this.state.loading?(<ActivityIndicator animating={true}  />):null}
-                <ListView  style={{width:width,height:height/3}} enableEmptySections={true} dataSource={this.state.pairedDs}
-                          renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
-                          	this.setState({
-    							loading:true
-    						});
-                            BluetoothManager.connect(rowData.address)
-                            .then((s)=>{
-                            	this.setState({
-    								loading:false,
-    								boundAddress:rowData.address,
-    								name:rowData.name || rowData.address
-    							})
-                            alert(s);
-                            },(e)=>{
-                            	this.setState({
-    							loading:false
-    								})
-                           		 alert(e);
-                            })
-
-                          }}>{rowData.name||rowData.address}</Text>}/>
-            </View>
-        );
-    }
-    _selfTest(){
-    	this.setState({
-    		loading:true
-    	},()=>{
-    		BluetoothEscposPrinter.selfTest();
-
-    			this.setState({
-    				loading:false
-    			})
-    	})
-    }
-
-    _scan() {
-    	this.setState({
-    		loading:true
-    	})
-        BluetoothManager.scanDevices()
-            .then((s)=> {
-                var ss = JSON.parse(s);
                 this.setState({
-                    pairedDs: this.state.pairedDs.cloneWithRows(ss.paired || []),
-                    foundDs: this.state.foundDs.cloneWithRows(ss.found || []),
-                    loading:false
-                },()=>{
-                	this.paired = ss.paired||[];
-                	this.found = ss.found ||[];
-                });
-            }, (er)=> {
-            	this.setState({
-            		loading:false
-            	})
-                alert('error' + JSON.stringify(er));
-            });
-    }
+                   bleOpend:true,
+                   loading:false,
+                   pairedDs:this.state.pairedDs.cloneWithRows(paired)
+               })
+            },(err)=>{
+               this.setState({
+                  loading:false
+              })
+               alert(err)
+           });
+        }
+    }} />
+    <Text>Connected:{!this.state.name ? 'No Devices' : this.state.name}</Text>
+    {this.state.bleOpend ? (<Button disabled={this.state.loading} onPress={()=>{this._scan()}} title="scan"/>) :
+    <Text>Open BLE first</Text>}
+    {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Self Test" onPress={()=>{this._selfTest()}} />):null}
+    {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Print Label" onPress={()=>{
+                 	//this._printText('show me the money')
+                     BluetoothTscPrinter.printLabel(
+                     {
+                        width: 40,
+                        height: 30,
+                        gap: 20,
+                        direction: BluetoothTscPrinter.DIRECTION.FORWARD,
+                        reference: [0, 0],
+                        tear: BluetoothTscPrinter.TEAR.ON,
+                        sound: 0,
+                        text: [{
+                            text: 'I am a testing txt',
+                            x: 20,
+                            y: 0,
+                            fonttype: BluetoothTscPrinter.FONTTYPE.SIMPLIFIED_CHINESE,
+                            rotation: BluetoothTscPrinter.ROTATION.ROTATION_0,
+                            xscal:BluetoothTscPrinter.FONTMUL.MUL_1,
+                            yscal: BluetoothTscPrinter.FONTMUL.MUL_1
+                        },{
+                            text: '你在说什么呢?',
+                            x: 20,
+                            y: 50,
+                            fonttype: BluetoothTscPrinter.FONTTYPE.SIMPLIFIED_CHINESE,
+                            rotation: BluetoothTscPrinter.ROTATION.ROTATION_0,
+                            xscal:BluetoothTscPrinter.FONTMUL.MUL_1,
+                            yscal: BluetoothTscPrinter.FONTMUL.MUL_1
+                        }],
+                        qrcode: [{x: 20, y: 96, level: BluetoothTscPrinter.EEC.LEVEL_L, width: 3, rotation: BluetoothTscPrinter.ROTATION.ROTATION_0, code: 'show me the money'}],
+                        barcode: [{x: 120, y:96, type: BluetoothTscPrinter.BARCODETYPE.CODE128, height: 40, readabel: 1, rotation: BluetoothTscPrinter.ROTATION.ROTATION_0, code: '1234567890'}],
+                        image: [{x: 160, y: 160, mode: BluetoothTscPrinter.BITMAP_MODE.OVERWRITE,width: 60,image: base64Image}]
+                    }
+                    ).then(()=>{alert("done")},(err)=>{alert(err)});
+
+                 }
+             } />):null}
+
+    {this.state.bleOpend && this.state.boundAddress.length>0?(<Button disabled={this.state.loading} title="Print Receipt" onPress={async ()=>{
+      await BluetoothEscposPrinter.printerInit();
+      await BluetoothEscposPrinter.printerLeftSpace(0);
+      await BluetoothEscposPrinter.printBarCode("123456789012", BluetoothEscposPrinter.BARCODETYPE.UPC_A, 3, 168, 0, 2);
+      await  BluetoothEscposPrinter.printQRCode("你是不是傻?",280,BluetoothEscposPrinter.ERROR_CORRECTION.L);//.then(()=>{alert('done')},(err)=>{alert(err)});
+      await BluetoothEscposPrinter.printerUnderLine(2);
+      await  BluetoothEscposPrinter.printText("su me ma seeeee中国话\n\r",{
+        encoding:'GBK',
+        codepage:0,
+        widthtimes:0,
+        heigthtimes:0,
+        fonttype:1
+    });
+      await BluetoothEscposPrinter.printerUnderLine(0);
+      await BluetoothEscposPrinter.rotate(BluetoothEscposPrinter.ROTATION.ON); 
+      await  BluetoothEscposPrinter.printText("中国话中国话中国话中国话中国话\n\r",{
+        encoding:'GBK',
+        codepage:0,
+        widthtimes:0,
+        heigthtimes:0,
+        fonttype:1
+    });
+      await BluetoothEscposPrinter.rotate(BluetoothEscposPrinter.ROTATION.OFF); 
+      await  BluetoothEscposPrinter.printText("中国话中国话中国话中国话中国话\n\r",{
+        encoding:'GBK',
+        codepage:0,
+        widthtimes:0,
+        heigthtimes:0,
+        fonttype:1
+    });
+      await BluetoothEscposPrinter.printerLeftSpace(0);
+      await BluetoothEscposPrinter.printColumn([BluetoothEscposPrinter.width58/8/3,BluetoothEscposPrinter.width58/8/3-1,BluetoothEscposPrinter.width58/8/3-1],
+        [BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER],
+        ["我就是一个测试看看很长会怎么样的啦",'testing','223344'],{fonttype:1});
+
+      
+      await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);  
+      await BluetoothEscposPrinter.setBlob(0);
+      await  BluetoothEscposPrinter.printText("广州俊烨\n\r",{
+        encoding:'GBK',
+        codepage:0,
+        widthtimes:3,
+        heigthtimes:3,
+        fonttype:1
+    });
+      await BluetoothEscposPrinter.setBlob(0);
+      await  BluetoothEscposPrinter.printText("销售单\n\r",{
+        encoding:'GBK',
+        codepage:0,
+        widthtimes:0,
+        heigthtimes:0,
+        fonttype:1
+    });
+      await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
+      await  BluetoothEscposPrinter.printText("客户：零售客户\n\r",{});
+      await  BluetoothEscposPrinter.printText("单号：xsd201909210000001\n\r",{});
+      await  BluetoothEscposPrinter.printText("日期："+(dateFormat(new Date(), "yyyy-mm-dd h:MM:ss"))+"\n\r",{});
+      await  BluetoothEscposPrinter.printText("销售员：18664896621\n\r",{});
+      await  BluetoothEscposPrinter.printText("--------------------------------\n\r",{});
+      let columnWidths = [12,6,6,8];
+      await BluetoothEscposPrinter.printColumn(columnWidths,
+        [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.RIGHT],
+        ["商品",'数量','单价','金额'],{});
+      await BluetoothEscposPrinter.printColumn(columnWidths,
+        [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.RIGHT],
+        ["React-Native定制开发",'1.00套','32000.00','32000.00'],{});
+      await  BluetoothEscposPrinter.printText("\n\r",{});
+      await  BluetoothEscposPrinter.printText("--------------------------------\n\r",{});
+      await BluetoothEscposPrinter.printColumn([12,12,8],
+        [BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.LEFT,BluetoothEscposPrinter.ALIGN.RIGHT],
+        ["合计",'1.00','32000.00'],{});
+      await  BluetoothEscposPrinter.printText("\n\r",{});
+      await  BluetoothEscposPrinter.printText("折扣率：100%\n\r",{});
+      await  BluetoothEscposPrinter.printText("折扣后应收：32000.00\n\r",{});
+      await  BluetoothEscposPrinter.printText("会员卡支付：0.00\n\r",{});
+      await  BluetoothEscposPrinter.printText("积分抵扣：0.00\n\r",{});
+      await  BluetoothEscposPrinter.printText("支付金额：32000.00\n\r",{});
+      await  BluetoothEscposPrinter.printText("结算账户：现金账户\n\r",{});
+      await  BluetoothEscposPrinter.printText("备注：无\n\r",{});
+      await  BluetoothEscposPrinter.printText("快递单号：无\n\r",{});
+      await  BluetoothEscposPrinter.printText("打印时间："+(dateFormat(new Date(), "yyyy-mm-dd h:MM:ss"))+"\n\r",{});
+      await  BluetoothEscposPrinter.printText("--------------------------------\n\r",{});
+      await  BluetoothEscposPrinter.printText("电话：\n\r",{});
+      await  BluetoothEscposPrinter.printText("地址:\n\r\n\r",{});
+      await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
+      await  BluetoothEscposPrinter.printText("欢迎下次光临\n\r\n\r\n\r",{});
+      await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
+
+
+  }} />):null}
+
+<Text>Found:</Text>
+{this.state.loading?(<ActivityIndicator animating={true}  />):null}
+<ListView style={{width:width,height:height/3}} enableEmptySections={true} dataSource={this.state.foundDs}
+renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
+ this.setState({
+     loading:true
+ });
+ BluetoothManager.connect(rowData.address)
+ .then((s)=>{
+   this.setState({
+    loading:false,
+    boundAddress:rowData.address
+})
+},(e)=>{
+   this.setState({
+     loading:false
+ })
+   alert(e);
+})
+
+}}>{rowData.name||rowData.address}</Text>}/>
+<Text>Paired:</Text>
+{this.state.loading?(<ActivityIndicator animating={true}  />):null}
+<ListView  style={{width:width,height:height/3}} enableEmptySections={true} dataSource={this.state.pairedDs}
+renderRow={(rowData) => <Text style={{width:'100%',marginBottom:20}} onPress={()=>{
+ this.setState({
+     loading:true
+ });
+ BluetoothManager.connect(rowData.address)
+ .then((s)=>{
+   this.setState({
+    loading:false,
+    boundAddress:rowData.address,
+    name:rowData.name || rowData.address
+})
+   alert(s);
+},(e)=>{
+   this.setState({
+     loading:false
+ })
+   alert(e);
+})
+
+}}>{rowData.name||rowData.address}</Text>}/>
+</View>
+);
+}
+_selfTest(){
+   this.setState({
+      loading:true
+  },()=>{
+      BluetoothEscposPrinter.selfTest(()=>{});
+
+      this.setState({
+        loading:false
+    })
+})
+}
+
+_scan() {
+   this.setState({
+      loading:true
+  })
+  BluetoothManager.scanDevices()
+  .then((s)=> {
+    var ss = JSON.parse(s);
+    this.setState({
+        pairedDs: this.state.pairedDs.cloneWithRows(ss.paired || []),
+        foundDs: this.state.foundDs.cloneWithRows(ss.found || []),
+        loading:false
+    },()=>{
+       this.paired = ss.paired||[];
+       this.found = ss.found ||[];
+   });
+}, (er)=> {
+   this.setState({
+      loading:false
+  })
+  alert('error' + JSON.stringify(er));
+});
+}
 }
 
 const styles = StyleSheet.create({

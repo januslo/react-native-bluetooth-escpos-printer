@@ -208,6 +208,36 @@ public class PrintPicture {
 
         return data;
     }
+    public static byte[] pixToEscRastBitImageCmd(byte[] src) {
+        byte[] data = new byte[src.length / 8];
+        int i = 0;
+
+        for (int k = 0; i < data.length; ++i) {
+            data[i] = (byte) (p0[src[k]] + p1[src[k + 1]] + p2[src[k + 2]] + p3[src[k + 3]] + p4[src[k + 4]] + p5[src[k + 5]] + p6[src[k + 6]] + src[k + 7]);
+            k += 8;
+        }
+
+        return data;
+    }
+    public static byte[] pixToEscNvBitImageCmd(byte[] src, int width, int height) {
+        byte[] data = new byte[src.length / 8 + 4];
+        data[0] = (byte) (width / 8 % 256);
+        data[1] = (byte) (width / 8 / 256);
+        data[2] = (byte) (height / 8 % 256);
+        data[3] = (byte) (height / 8 / 256);
+        boolean k = false;
+
+        for (int i = 0; i < width; ++i) {
+            int var7 = 0;
+
+            for (int j = 0; j < height / 8; ++j) {
+                data[4 + j + i * height / 8] = (byte) (p0[src[i + var7]] + p1[src[i + var7 + 1 * width]] + p2[src[i + var7 + 2 * width]] + p3[src[i + var7 + 3 * width]] + p4[src[i + var7 + 4 * width]] + p5[src[i + var7 + 5 * width]] + p6[src[i + var7 + 6 * width]] + src[i + var7 + 7 * width]);
+                var7 += 8 * width;
+            }
+        }
+
+        return data;
+    }
     public static byte[] bitmapToBWPix(Bitmap mBitmap) {
         int[] pixels = new int[mBitmap.getWidth() * mBitmap.getHeight()];
         byte[] data = new byte[mBitmap.getWidth() * mBitmap.getHeight()];

@@ -9,7 +9,7 @@ import java.util.Vector;
 
 public class TscCommand {
     private static final String DEBUG_TAG = "TSCCommand";
-    Vector<Byte> Command = null;
+    private Vector<Byte> Command = null;
 
     public static enum FOOT {
         F2(0), F5(1);
