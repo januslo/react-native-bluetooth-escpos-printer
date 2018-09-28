@@ -109,9 +109,11 @@ BluetoothTscPrinter.TEAR = {
 	ON:'ON',
 	OFF:'OFF'
 };
+BluetoothTscPrinter.READABLE={
+  DISABLE:0,
+  EANBLE:1
+};
 
-
-//TODO: make to right here........
 BluetoothEscposPrinter.ERROR_CORRECTION = {
      L:1,
     M:0,

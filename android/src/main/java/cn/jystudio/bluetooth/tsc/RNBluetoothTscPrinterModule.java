@@ -144,8 +144,8 @@ implements BluetoothServiceStateObserver{
                 TscCommand.ROTATION rotation = this.findRotation(bar.getInt("rotation"));
                 String code = bar.getString("code");
                 TscCommand.BARCODETYPE type = this.findBarcodeType(bar.getString("type"));
-                TscCommand.READABEL readabel = this.findReadabel(bar.getInt("readabel"));
-                tsc.add1DBarcode(x, y, type, barHeight, readabel, rotation, code);
+                TscCommand.READABLE readable = this.findReadable(bar.getInt("readable"));
+                tsc.add1DBarcode(x, y, type, barHeight, readable, rotation, code);
             }
         }
 
@@ -187,10 +187,10 @@ implements BluetoothServiceStateObserver{
         return barcodeType;
     }
 
-    private TscCommand.READABEL findReadabel(int readabel) {
-        TscCommand.READABEL ea = TscCommand.READABEL.EANBEL;
-        if (TscCommand.READABEL.DISABLE.getValue() == readabel) {
-            ea = TscCommand.READABEL.DISABLE;
+    private TscCommand.READABEL findReadable(int readable) {
+        TscCommand.READABLE ea = TscCommand.READABLE.EANBLE;
+        if (TscCommand.READABLE.DISABLE.getValue() == readable) {
+            ea = TscCommand.READABLE.DISABLE;
         }
         return ea;
     }

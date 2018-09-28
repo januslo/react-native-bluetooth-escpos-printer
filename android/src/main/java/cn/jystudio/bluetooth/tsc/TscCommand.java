@@ -39,10 +39,10 @@ public class TscCommand {
         }
     }
 
-    public static enum READABEL {
-        DISABLE(0), EANBEL(1);
+    public static enum READABLE {
+        DISABLE(0), EANBLE(1);
 
-        private READABEL(int value) {
+        private READABLE(int value) {
             this.value = value;
         }
 

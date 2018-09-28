@@ -178,7 +178,7 @@ export default class App extends Component {
                             yscal: BluetoothTscPrinter.FONTMUL.MUL_1
                         }],
                         qrcode: [{x: 20, y: 96, level: BluetoothTscPrinter.EEC.LEVEL_L, width: 3, rotation: BluetoothTscPrinter.ROTATION.ROTATION_0, code: 'show me the money'}],
-                        barcode: [{x: 120, y:96, type: BluetoothTscPrinter.BARCODETYPE.CODE128, height: 40, readabel: 1, rotation: BluetoothTscPrinter.ROTATION.ROTATION_0, code: '1234567890'}],
+                        barcode: [{x: 120, y:96, type: BluetoothTscPrinter.BARCODETYPE.CODE128, height: 40, readable: 1, rotation: BluetoothTscPrinter.ROTATION.ROTATION_0, code: '1234567890'}],
                         image: [{x: 160, y: 160, mode: BluetoothTscPrinter.BITMAP_MODE.OVERWRITE,width: 60,image: base64Image}]
                     }
                     ).then(()=>{alert("done")},(err)=>{alert(err)});
@@ -201,7 +201,7 @@ export default class App extends Component {
         fonttype:1
     });
       await BluetoothEscposPrinter.printerUnderLine(0);
-      await BluetoothEscposPrinter.rotate(BluetoothEscposPrinter.ROTATION.ON); 
+      await BluetoothEscposPrinter.rotate(BluetoothEscposPrinter.ROTATION.ON);
       await  BluetoothEscposPrinter.printText("中国话中国话中国话中国话中国话\n\r",{
         encoding:'GBK',
         codepage:0,
@@ -209,7 +209,7 @@ export default class App extends Component {
         heigthtimes:0,
         fonttype:1
     });
-      await BluetoothEscposPrinter.rotate(BluetoothEscposPrinter.ROTATION.OFF); 
+      await BluetoothEscposPrinter.rotate(BluetoothEscposPrinter.ROTATION.OFF);
       await  BluetoothEscposPrinter.printText("中国话中国话中国话中国话中国话\n\r",{
         encoding:'GBK',
         codepage:0,
@@ -222,8 +222,8 @@ export default class App extends Component {
         [BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER,BluetoothEscposPrinter.ALIGN.CENTER],
         ["我就是一个测试看看很长会怎么样的啦",'testing','223344'],{fonttype:1});
 
-      
-      await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);  
+
+      await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
       await BluetoothEscposPrinter.setBlob(0);
       await  BluetoothEscposPrinter.printText("广州俊烨\n\r",{
         encoding:'GBK',
