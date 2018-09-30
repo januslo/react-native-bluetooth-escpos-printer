@@ -54,8 +54,8 @@ async function, check whether Bluetooth service is enabled.
             });
 ```
 
-* enableBluetooth ==>
-async function, enable the bluetooth service, returns the devices information already bound and paired.
+* enableBluetooth ==> ``` diff + ANDROID ONLY ```
+async function, enable the bluetooth service, returns the devices information already bound and paired.  ``` diff - IOS would just resovle with nil ```
 
 ```javascript
 BluetoothManager.enableBluetooth().then((r)=>{
@@ -75,8 +75,8 @@ BluetoothManager.enableBluetooth().then((r)=>{
            });
 ```
 
-* disableBluetooth ==>
-async function ,disable the bluetooth service.
+* disableBluetooth ==>  ``` diff + ANDROID ONLY ```
+async function ,disable the bluetooth service. ``` diff - IOS would just resovle with nil ```
 
 ```javascript
 BluetoothManager.disableBluetooth().then(()=>{

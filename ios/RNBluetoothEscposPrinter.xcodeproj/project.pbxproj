@@ -7,8 +7,55 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		83E5D47C215E57100009D216 /* RNBluetoothManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E5D47B215E57100009D216 /* RNBluetoothManager.m */; };
+		83E5D47F215E5A880009D216 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83E5D47E215E5A880009D216 /* CoreBluetooth.framework */; };
 		B3E7B58A1CC2AC0600A0062D /* RNBluetoothEscposPrinter.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNBluetoothEscposPrinter.m */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		83E5D46D215E51A30009D216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 25403CB3166A96FA00E13304;
+			remoteInfo = "ZXingObjC-iOS";
+		};
+		83E5D46F215E51A30009D216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 25403CC4166A96FA00E13304;
+			remoteInfo = "Unit Tests iOS";
+		};
+		83E5D471215E51A30009D216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 25404166166AADAC00E13304;
+			remoteInfo = "ZXingObjC-osx";
+		};
+		83E5D473215E51A30009D216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 25404178166AADAC00E13304;
+			remoteInfo = "Unit Tests OS X";
+		};
+		83E5D475215E51A30009D216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 2540439E166ABA0A00E13304;
+			remoteInfo = "OS X Framework";
+		};
+		83E5D477215E51A30009D216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = DB72547F1A523C9200EFF81B;
+			remoteInfo = "iOS Framework";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		58B511D91A9E6C8500147676 /* CopyFiles */ = {
@@ -24,6 +71,10 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNBluetoothEscposPrinter.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNBluetoothEscposPrinter.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZXingObjC.xcodeproj; path = "ZXingObjC-3.2.2/ZXingObjC.xcodeproj"; sourceTree = "<group>"; };
+		83E5D47A215E564B0009D216 /* RNBluetoothManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNBluetoothManager.h; sourceTree = "<group>"; };
+		83E5D47B215E57100009D216 /* RNBluetoothManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNBluetoothManager.m; sourceTree = "<group>"; };
+		83E5D47E215E5A880009D216 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		B3E7B5881CC2AC0600A0062D /* RNBluetoothEscposPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNBluetoothEscposPrinter.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNBluetoothEscposPrinter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNBluetoothEscposPrinter.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -33,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83E5D47F215E5A880009D216 /* CoreBluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -50,10 +102,35 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				83E5D47B215E57100009D216 /* RNBluetoothManager.m */,
+				83E5D47A215E564B0009D216 /* RNBluetoothManager.h */,
+				83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */,
 				B3E7B5881CC2AC0600A0062D /* RNBluetoothEscposPrinter.h */,
 				B3E7B5891CC2AC0600A0062D /* RNBluetoothEscposPrinter.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
+				83E5D47D215E5A880009D216 /* Frameworks */,
 			);
+			sourceTree = "<group>";
+		};
+		83E5D465215E51A20009D216 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				83E5D46E215E51A30009D216 /* libZXingObjC-iOS.a */,
+				83E5D470215E51A30009D216 /* Unit Tests iOS.xctest */,
+				83E5D472215E51A30009D216 /* libZXingObjC-osx.a */,
+				83E5D474215E51A30009D216 /* Unit Tests OS X.xctest */,
+				83E5D476215E51A30009D216 /* ZXingObjC.framework */,
+				83E5D478215E51A30009D216 /* ZXingObjC.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		83E5D47D215E5A880009D216 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				83E5D47E215E5A880009D216 /* CoreBluetooth.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -100,6 +177,12 @@
 			mainGroup = 58B511D21A9E6C8500147676;
 			productRefGroup = 58B511D21A9E6C8500147676;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 83E5D465215E51A20009D216 /* Products */;
+					ProjectRef = 83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				58B511DA1A9E6C8500147676 /* RNBluetoothEscposPrinter */,
@@ -107,12 +190,58 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXReferenceProxy section */
+		83E5D46E215E51A30009D216 /* libZXingObjC-iOS.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libZXingObjC-iOS.a";
+			remoteRef = 83E5D46D215E51A30009D216 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83E5D470215E51A30009D216 /* Unit Tests iOS.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = "Unit Tests iOS.xctest";
+			remoteRef = 83E5D46F215E51A30009D216 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83E5D472215E51A30009D216 /* libZXingObjC-osx.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libZXingObjC-osx.a";
+			remoteRef = 83E5D471215E51A30009D216 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83E5D474215E51A30009D216 /* Unit Tests OS X.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = "Unit Tests OS X.xctest";
+			remoteRef = 83E5D473215E51A30009D216 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83E5D476215E51A30009D216 /* ZXingObjC.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ZXingObjC.framework;
+			remoteRef = 83E5D475215E51A30009D216 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83E5D478215E51A30009D216 /* ZXingObjC.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ZXingObjC.framework;
+			remoteRef = 83E5D477215E51A30009D216 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
 /* Begin PBXSourcesBuildPhase section */
 		58B511D71A9E6C8500147676 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				B3E7B58A1CC2AC0600A0062D /* RNBluetoothEscposPrinter.m in Sources */,
+				83E5D47C215E57100009D216 /* RNBluetoothManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,7 +251,7 @@
 		58B511ED1A9E6C8500147676 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -156,6 +285,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../../../React/**",
+					"$(SRCROOT)/../../react-native/React/**",
+					"$(SRCROOT)/ZXingObjC-3.2.2/**",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -166,7 +302,7 @@
 		58B511EE1A9E6C8500147676 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -193,6 +329,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../../../React/**",
+					"$(SRCROOT)/../../react-native/React/**",
+					"$(SRCROOT)/ZXingObjC-3.2.2/**",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
@@ -204,7 +347,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
-				"$(inherited)",
+					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",

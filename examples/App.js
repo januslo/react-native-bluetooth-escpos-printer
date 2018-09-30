@@ -10,7 +10,7 @@
  */
 
 import React, {Component} from 'react';
-import {ActivityIndicator,Platform, StyleSheet, Text, View,Image,Button,NativeModules,ListView,DeviceEventEmitter,Switch} from 'react-native';
+import {ActivityIndicator,Platform, StyleSheet, Text, View,Image,Button,NativeModules,ListView,DeviceEventEmitter,NativeEventEmitter,Switch} from 'react-native';
 import {BluetoothManager,BluetoothEscposPrinter,BluetoothTscPrinter} from 'react-native-bluetooth-escpos-printer';
 
 
@@ -45,13 +45,21 @@ export default class App extends Component {
     componentDidMount() {//alert(BluetoothManager)
         BluetoothManager.isBluetoothEnabled().then((enabled)=> {
             this.setState({
-                bleOpend: enabled,
+                bleOpend: Boolean(enabled),
                 loading: false
             })
         }, (err)=> {
             err
         });
 
+if(Platform.OS === 'ios'){
+  let bluetoothManagerEmitter = new NativeEventEmitter(BluetoothManager);
+    this._listeners.push(bluetoothManagerEmitter.addListener(BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED,
+    (rsp)=>{this._deviceAlreadPaired(rsp)}));
+    this._listeners.push(bluetoothManagerEmitter.addListener(BluetoothManager.EVENT_DEVICE_FOUND, (rsp)=> {
+        this._deviceFoundEvent(rsp)
+    }));
+}else if(Platform.OS === 'android'){
         this._listeners.push(DeviceEventEmitter.addListener(
             BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED, (rsp)=> {
                 this._deviceAlreadPaired(rsp)
@@ -60,7 +68,8 @@ export default class App extends Component {
             BluetoothManager.EVENT_DEVICE_FOUND, (rsp)=> {
                 this._deviceFoundEvent(rsp)
             }));
-    }
+          }
+        }
 
     componentWillUnmount() {
         for (let ls in this._listeners) {
@@ -81,13 +90,18 @@ export default class App extends Component {
         });
     }
 
-    _deviceFoundEvent(rsp) {
+    _deviceFoundEvent(rsp) {//alert(JSON.stringify(rsp))
         var r = null;
         try {
+          if( typeof(rsp.device)=="object"){
+            r =rsp.device;
+          }else{
             r = JSON.parse(rsp.device);
-        } catch (e) {
+          }
+        } catch (e) {//alert(e.message);
             //ignore
         }
+        //alert('f')
         if (r) {
             if (!this.found) this.found = [];
             this.found.push(r);
