@@ -57,7 +57,7 @@ RCT_EXPORT_METHOD(setWidth:(int) width)
 RCT_EXPORT_METHOD(printerInit:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    if(RNBluetoothManager.connectedDevice){
+    if(RNBluetoothManager.isConnected){
         NSMutableData *data = [[NSMutableData alloc] init];
         NSInteger at = (int)'@';
         [data appendBytes:ESC length:sizeof(ESC)];

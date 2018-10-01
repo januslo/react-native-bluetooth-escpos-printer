@@ -17,5 +17,8 @@
 @property (strong,nonatomic) NSString *waitingConnect;
 @property (nonatomic,copy) RCTPromiseResolveBlock connectResolveBlock;
 @property (nonatomic,copy) RCTPromiseRejectBlock connectRejectBlock;
-+(CBPeripheral *)connectedDevice;
++(Boolean)writeValue:(NSArray *) data;
++(Boolean)isConnected;
+-(void)initSupportServices;
+-(void)callStop;
 @end
