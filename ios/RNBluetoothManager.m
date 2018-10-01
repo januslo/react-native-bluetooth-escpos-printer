@@ -193,7 +193,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
     //TODO: peripheral.identifier.UUIDString
     NSDictionary *idAndName =@{@"address":peripheral.identifier.UUIDString,@"name":peripheral.name?peripheral.name:peripheral.identifier.UUIDString};
     NSDictionary *peripheralStored = @{peripheral.identifier.UUIDString:peripheral};
-    if(self.foundDevices){
+    if(!self.foundDevices){
         self.foundDevices = [[NSMutableDictionary alloc] init];
     }
     [self.foundDevices addEntriesFromDictionary:peripheralStored];
