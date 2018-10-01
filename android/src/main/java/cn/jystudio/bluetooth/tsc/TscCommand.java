@@ -369,7 +369,7 @@ public class TscCommand {
         addStrToCommand(str);
     }
 
-    public void add1DBarcode(int x, int y, BARCODETYPE type, int height, READABEL readable, ROTATION rotation,
+    public void add1DBarcode(int x, int y, BARCODETYPE type, int height, READABLE readable, ROTATION rotation,
                              String content) {
         int narrow = 2;
         int width = 2;
