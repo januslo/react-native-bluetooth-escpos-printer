@@ -187,7 +187,7 @@ implements BluetoothServiceStateObserver{
         return barcodeType;
     }
 
-    private TscCommand.READABEL findReadable(int readable) {
+    private TscCommand.READABLE findReadable(int readable) {
         TscCommand.READABLE ea = TscCommand.READABLE.EANBLE;
         if (TscCommand.READABLE.DISABLE.getValue() == readable) {
             ea = TscCommand.READABLE.DISABLE;
