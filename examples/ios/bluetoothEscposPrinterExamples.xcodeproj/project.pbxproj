@@ -992,8 +992,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-ObjC",
 					"-lc++",
+					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.jystudio.bluetooth.escpos;
 				PRODUCT_NAME = bluetoothEscposPrinterExamples;
@@ -1015,8 +1015,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-ObjC",
 					"-lc++",
+					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.jystudio.bluetooth.escpos;
 				PRODUCT_NAME = bluetoothEscposPrinterExamples;

@@ -377,7 +377,9 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
                 @try{
                     [connected writeValue:toWrite forCharacteristic:cc type:CBCharacteristicWriteWithoutResponse];
                    if(writeDataDelegate) [writeDataDelegate didWriteDataToBle:true];
-                    NSLog(@"Value wrote: %@",[[NSString alloc] initWithData:toWrite encoding:CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000)]);
+                    if(toWrite){
+                        NSLog(@"Value wrote: %lu",[toWrite length]);
+                    }
                 }
                 @catch(NSException *e){
                     NSLog(@"ERRO IN WRITE VALUE: %@",e);

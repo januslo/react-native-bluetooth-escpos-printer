@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		83B72B45216A0FEA007780F3 /* PrintColumnBleWriteDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 83B72B3B216A0FE9007780F3 /* PrintColumnBleWriteDelegate.m */; };
+		83B72B46216A0FEA007780F3 /* ColumnSplitedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 83B72B44216A0FEA007780F3 /* ColumnSplitedString.m */; };
+		83B72B48216A0FF4007780F3 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B72B47216A0FF4007780F3 /* UIKit.framework */; };
+		83B72B7C216A70D2007780F3 /* ImageUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 83B72B7B216A70D1007780F3 /* ImageUtils.m */; };
+		83B72B7D216A70D6007780F3 /* libZXingObjC-iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 83E5D46E215E51A30009D216 /* libZXingObjC-iOS.a */; };
 		83E5D47C215E57100009D216 /* RNBluetoothManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E5D47B215E57100009D216 /* RNBluetoothManager.m */; };
 		83E5D47F215E5A880009D216 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83E5D47E215E5A880009D216 /* CoreBluetooth.framework */; };
 		83FAD6B12161C9C6001C4911 /* RNBluetoothTscPrinter.m in Sources */ = {isa = PBXBuildFile; fileRef = 83FAD6B02161C9C6001C4911 /* RNBluetoothTscPrinter.m */; };
@@ -72,6 +77,13 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNBluetoothEscposPrinter.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNBluetoothEscposPrinter.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		83B72B3B216A0FE9007780F3 /* PrintColumnBleWriteDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PrintColumnBleWriteDelegate.m; sourceTree = "<group>"; };
+		83B72B42216A0FEA007780F3 /* PrintColumnBleWriteDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PrintColumnBleWriteDelegate.h; sourceTree = "<group>"; };
+		83B72B43216A0FEA007780F3 /* ColumnSplitedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColumnSplitedString.h; sourceTree = "<group>"; };
+		83B72B44216A0FEA007780F3 /* ColumnSplitedString.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColumnSplitedString.m; sourceTree = "<group>"; };
+		83B72B47216A0FF4007780F3 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		83B72B74216A70D1007780F3 /* ImageUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageUtils.h; sourceTree = "<group>"; };
+		83B72B7B216A70D1007780F3 /* ImageUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageUtils.m; sourceTree = "<group>"; };
 		83E5D464215E51A20009D216 /* ZXingObjC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZXingObjC.xcodeproj; path = "ZXingObjC-3.2.2/ZXingObjC.xcodeproj"; sourceTree = "<group>"; };
 		83E5D47A215E564B0009D216 /* RNBluetoothManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNBluetoothManager.h; sourceTree = "<group>"; };
 		83E5D47B215E57100009D216 /* RNBluetoothManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNBluetoothManager.m; sourceTree = "<group>"; };
@@ -87,6 +99,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83B72B7D216A70D6007780F3 /* libZXingObjC-iOS.a in Frameworks */,
+				83B72B48216A0FF4007780F3 /* UIKit.framework in Frameworks */,
 				83E5D47F215E5A880009D216 /* CoreBluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -105,6 +119,12 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				83B72B74216A70D1007780F3 /* ImageUtils.h */,
+				83B72B7B216A70D1007780F3 /* ImageUtils.m */,
+				83B72B43216A0FEA007780F3 /* ColumnSplitedString.h */,
+				83B72B44216A0FEA007780F3 /* ColumnSplitedString.m */,
+				83B72B42216A0FEA007780F3 /* PrintColumnBleWriteDelegate.h */,
+				83B72B3B216A0FE9007780F3 /* PrintColumnBleWriteDelegate.m */,
 				83FAD6B02161C9C6001C4911 /* RNBluetoothTscPrinter.m */,
 				83FAD6A92161C977001C4911 /* RNBluetoothTscPrinter.h */,
 				83E5D47B215E57100009D216 /* RNBluetoothManager.m */,
@@ -133,6 +153,7 @@
 		83E5D47D215E5A880009D216 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				83B72B47216A0FF4007780F3 /* UIKit.framework */,
 				83E5D47E215E5A880009D216 /* CoreBluetooth.framework */,
 			);
 			name = Frameworks;
@@ -245,7 +266,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83B72B45216A0FEA007780F3 /* PrintColumnBleWriteDelegate.m in Sources */,
 				B3E7B58A1CC2AC0600A0062D /* RNBluetoothEscposPrinter.m in Sources */,
+				83B72B46216A0FEA007780F3 /* ColumnSplitedString.m in Sources */,
+				83B72B7C216A70D2007780F3 /* ImageUtils.m in Sources */,
 				83E5D47C215E57100009D216 /* RNBluetoothManager.m in Sources */,
 				83FAD6B12161C9C6001C4911 /* RNBluetoothTscPrinter.m in Sources */,
 			);

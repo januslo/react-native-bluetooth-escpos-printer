@@ -210,7 +210,7 @@ if(Platform.OS === 'ios'){
       await BluetoothEscposPrinter.printerInit();
       await BluetoothEscposPrinter.printerLeftSpace(0);
     //TODO //  await BluetoothEscposPrinter.printBarCode("123456789012", BluetoothEscposPrinter.BARCODETYPE.UPC_A, 3, 168, 0, 2);
-    //TODO //  await  BluetoothEscposPrinter.printQRCode("你是不是傻?",280,BluetoothEscposPrinter.ERROR_CORRECTION.L);//.then(()=>{alert('done')},(err)=>{alert(err)});
+     await  BluetoothEscposPrinter.printQRCode("你是不是傻?",280,BluetoothEscposPrinter.ERROR_CORRECTION.L);//.then(()=>{alert('done')},(err)=>{alert(err)});
       await BluetoothEscposPrinter.printerUnderLine(2);
       await  BluetoothEscposPrinter.printText("中国话\n\r",{
         encoding:'GBK',
@@ -302,6 +302,15 @@ if(Platform.OS === 'ios'){
 }
 
   }}/>) : null}
+    {this.state.bleOpend && this.state.boundAddress.length > 0 ? (
+      <Button disabled={this.state.loading} title="ESC Print Image" onPress={async()=>{
+        try{
+            await BluetoothEscposPrinter.printPic(base64Image);
+        }catch(e){
+          alert(e.message || "ERROR")
+        }
+      }}  />
+    ):null}
 
                 <Text>Found:</Text>
                 {this.state.loading ? (<ActivityIndicator animating={true}/>) : null}

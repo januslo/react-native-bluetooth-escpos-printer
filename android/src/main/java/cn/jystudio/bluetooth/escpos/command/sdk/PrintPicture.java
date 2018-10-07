@@ -178,14 +178,15 @@ public class PrintPicture {
 
         for (int i = 0; i < nHeight; ++i) {
             int var10 = i * (8 + nBytesPerLine);
-            data[var10 + 0] = 29;
-            data[var10 + 1] = 118;
-            data[var10 + 2] = 48;
+            //GS v 0 m xL xH yL yH d1....dk 打印光栅位图
+            data[var10 + 0] = 29;//GS
+            data[var10 + 1] = 118;//v
+            data[var10 + 2] = 48;//0
             data[var10 + 3] = (byte) (nMode & 1);
-            data[var10 + 4] = (byte) (nBytesPerLine % 256);
-            data[var10 + 5] = (byte) (nBytesPerLine / 256);
-            data[var10 + 6] = 1;
-            data[var10 + 7] = 0;
+            data[var10 + 4] = (byte) (nBytesPerLine % 256);//xL
+            data[var10 + 5] = (byte) (nBytesPerLine / 256);//xH
+            data[var10 + 6] = 1;//yL
+            data[var10 + 7] = 0;//yH
 
             for (int j = 0; j < nBytesPerLine; ++j) {
                 data[var10 + 8 + j] = (byte) (p0[src[k]] + p1[src[k + 1]] + p2[src[k + 2]] + p3[src[k + 3]] + p4[src[k + 4]] + p5[src[k + 5]] + p6[src[k + 6]] + src[k + 7]);

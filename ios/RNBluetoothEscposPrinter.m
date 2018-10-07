@@ -5,16 +5,17 @@
 #import "RNBluetoothEscposPrinter.h"
 #import "ColumnSplitedString.h"
 #import "PrintColumnBleWriteDelegate.h"
-
+#import "ImageUtils.h"
+#import "ZXingObjC/ZXingObjC.h"
 @implementation RNBluetoothEscposPrinter
 
 int WIDTH_58 = 384;
 int WIDTH_80 = 576;
 Byte ESC[] = {0x1b};
 //NSInteger ESC = 0x1b;
-Byte FS[] = {0x1c};
+Byte ESC_FS[] = {0x1c};
 //NSInteger FS = 0x1C;
-Byte GS[] = {0x1D};
+Byte ESC_GS[] = {0x1D};
 Byte US[] = {0x1F};
 Byte DLE[] = {0x10};
 Byte DC4[] = {0x14};
@@ -35,6 +36,13 @@ Byte G[] = {0x47};//G
 
 RCTPromiseResolveBlock pendingResolve;
 RCTPromiseRejectBlock pendingReject;
+
+-(id)init {
+    if (self = [super init])  {
+        self.deviceWidth = WIDTH_58;
+    }
+    return self;
+}
 
 
 - (dispatch_queue_t)methodQueue
@@ -104,7 +112,7 @@ RCT_EXPORT_METHOD(printerLeftSpace:(int) sp
         Byte left[] = {'L'};
         Byte sp_up[] = {(sp%100)};
         Byte sp_down[] = {(sp/100)};
-        [data appendBytes:GS length:1];
+        [data appendBytes:ESC_GS length:1];
         [data appendBytes:left length:1];
         [data appendBytes:sp_up length:1];
         [data appendBytes:sp_down length:1];
@@ -132,7 +140,7 @@ RCT_EXPORT_METHOD(printerUnderLine:(int)sp withResolver:(RCTPromiseResolveBlock)
         [data appendBytes:ESC length:1];
         [data appendBytes:under_line length:1];
         [data appendBytes:spb length:1];
-        [data appendBytes:FS length:1];
+        [data appendBytes:ESC_FS length:1];
         [data appendBytes:under_line length:1];
         [data appendBytes:spb length:1];
         pendingResolve = resolve;
@@ -204,7 +212,7 @@ RCT_EXPORT_METHOD(printText:(NSString *) text withOptions:(NSDictionary *) optio
     NSMutableData *toSend = [[NSMutableData alloc] init];
     
     //gsExclamationMark:{GS, '!', 0x00 };
-    [toSend appendBytes:GS length:sizeof(GS)];
+    [toSend appendBytes:ESC_GS length:sizeof(ESC_GS)];
     [toSend appendBytes:SIGN length:sizeof(SIGN)];
     [toSend appendBytes:&multTime length:sizeof(multTime)];
     //escT:  {ESC, 't', 0x00 };
@@ -213,12 +221,12 @@ RCT_EXPORT_METHOD(printText:(NSString *) text withOptions:(NSDictionary *) optio
     [toSend appendBytes:&codePage length:sizeof(codePage)];NSLog(@"codepage: %lu",codePage);
     if(codePage == 0){
         //FS_and :{FS, '&' };
-        [toSend appendBytes:FS length:sizeof(FS)];
+        [toSend appendBytes:ESC_FS length:sizeof(ESC_FS)];
         [toSend appendBytes:AND length:sizeof(AND)];
     }else{NSLog(@"{FS,46}");
         //FS_dot: {FS, 46 };
         NSInteger fourtySix= 46;
-        [toSend appendBytes:FS length:sizeof(FS)];
+        [toSend appendBytes:ESC_FS length:sizeof(ESC_FS)];
         [toSend appendBytes:&fourtySix length:sizeof(fourtySix)];
     }
     //escM:{ESC, 'M', 0x00 };
@@ -329,7 +337,7 @@ RCT_EXPORT_METHOD(printColumn:(NSArray *)columnWidths
                    
                     for(int c=0;c<[text length];c++){
                         unichar ch = [text characterAtIndex:c];
-                        int l = (ch>>= 0x4e00 && ch <= 0x9fff)?2:1;
+                        int l = (ch>= 0x4e00 && ch <= 0x9fff)?2:1;
                         if (l==2){
                             shorter=shorter+1;
                         }
@@ -374,9 +382,9 @@ RCT_EXPORT_METHOD(printColumn:(NSArray *)columnWidths
                             startIdx =(int)(width - s.shorter-[ss length]);
                         }
                         NSInteger length =[ss length];
-                        if(length+startIdx>[empty length]){
-                            length = [empty length]-startIdx;
-                        }
+//                        if(length+startIdx>[empty length]){
+//                            length = [empty length]-startIdx;
+//                        }
                         NSLog(@"empty(length: %lu) replace from %d length %lu with str:%@)",[empty length],startIdx,length,ss);
                         [empty replaceCharactersInRange:NSMakeRange(startIdx, length) withString:ss];
                         [formated addObject:empty];
@@ -457,6 +465,143 @@ RCT_EXPORT_METHOD(setBlob:(NSInteger) sp
     pendingResolve = resolve;
     [RNBluetoothManager writeValue:toSend withDelegate:self];
 }
+
+RCT_EXPORT_METHOD(printPic:(NSString *) base64encodeStr
+                  withResolver:(RCTPromiseResolveBlock) resolve
+                  rejecter:(RCTPromiseRejectBlock) reject)
+{
+    if(RNBluetoothManager.isConnected){
+        @try{
+            NSData *decoded = [[NSData alloc] initWithBase64EncodedString:base64encodeStr options:0 ];
+            UIImage *srcImage = [[UIImage alloc] initWithData:decoded scale:1];
+            //mBitmap.getHeight() * width / mBitmap.getWidth();
+            NSInteger imgHeight = srcImage.size.height;
+            NSInteger imagWidth = srcImage.size.width;
+            CGSize size = CGSizeMake(_deviceWidth, imgHeight*_deviceWidth/imagWidth);
+            UIImage *scaled = [ImageUtils imageWithImage:srcImage scaledToFillSize:size];
+            unsigned char * graImage = [ImageUtils imageToGreyImage:scaled];
+            unsigned char * formatedData = [ImageUtils format_K_threshold:graImage width:size.width height:size.height];
+            NSData *dataToPrint = [ImageUtils eachLinePixToCmd:[NSData dataWithBytes:formatedData length:sizeof(formatedData)] nWidth:size.width nHeight:size.height nMode:0];
+            pendingResolve = resolve;
+            pendingReject = reject;
+            [RNBluetoothManager writeValue:dataToPrint withDelegate:self];
+        }
+        @catch(NSException *e){
+            NSLog(@"ERROR IN PRINTING IMG: %@",[e callStackSymbols]);
+              reject(@"COMMAND_NOT_SEND",@"COMMAND_NOT_SEND",nil);
+        }
+    }else{
+        reject(@"COMMAND_NOT_SEND",@"COMMAND_NOT_SEND",nil);
+    }
+}
+
+//@ReactMethod
+//public void printPic(String base64encodeStr) {
+//    byte[] bytes = Base64.decode(base64encodeStr, Base64.DEFAULT);
+//    Bitmap mBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+//    int nMode = 0;
+//    if (mBitmap != null) {
+//        /**
+//         * Parameters:
+//         * mBitmap  要打印的图片
+//         * nWidth   打印宽度（58和80）
+//         * nMode    打印模式
+//         * Returns: byte[]
+//         */
+//        byte[] data = PrintPicture.POS_PrintBMP(mBitmap, deviceWidth, nMode);
+//        //    SendDataByte(buffer);
+//        sendDataByte(Command.ESC_Init);
+//        sendDataByte(Command.LF);
+//        sendDataByte(data);
+//        sendDataByte(PrinterCommand.POS_Set_PrtAndFeedPaper(30));
+//        sendDataByte(PrinterCommand.POS_Set_Cut(1));
+//        sendDataByte(PrinterCommand.POS_Set_PrtInit());
+//    }
+//}
+
+RCT_EXPORT_METHOD(printQRCode:(NSString *)content
+                  withSize:(NSInteger) size
+                  correctionLevel:(NSInteger) correctionLevel
+                  andResolver:(RCTPromiseResolveBlock) resolve
+                  rejecter:(RCTPromiseRejectBlock) reject)
+{
+    NSLog(@"QRCODE TO PRINT: %@",content);
+    NSError *error = nil;
+    ZXMultiFormatWriter *writer = [ZXMultiFormatWriter writer];
+    ZXBitMatrix *result = [writer encode:content
+                                  format:kBarcodeFormatQRCode
+                                   width:size
+                                  height:size
+                                   error:&error];
+    if(error || !result){
+        reject(@"ERROR_IN_CREATE_QRCODE",@"ERROR_IN_CREATE_QRCODE",nil);
+    }else{
+//        NSInteger height = [result height];
+//        NSInteger width = [result width];
+//        unsigned int *pixels = malloc(height*width);
+//                for (int y = 0; y < height; y++) {
+//                    for (int x = 0; x < width; x++) {
+//                        if ([result getX:x y:y]) {
+//                            pixels[y * width + x] = 0xff000000;
+//                        } else {
+//                            pixels[y * width + x] = 0xffffffff;
+//                        }
+//                    }
+//                }
+          CGImageRef image = [[ZXImage imageWithMatrix:result] cgimage];
+        unsigned char * graImage = [ImageUtils imageToGreyImage:[UIImage imageWithCGImage:image]];
+        unsigned char * formatedData = [ImageUtils format_K_threshold:graImage width:size height:size];
+        NSData *dataToPrint = [ImageUtils eachLinePixToCmd:[NSData dataWithBytes:formatedData length:sizeof(formatedData)] nWidth:size nHeight:size nMode:0];
+        pendingResolve = resolve;
+        pendingReject = reject;
+        [RNBluetoothManager writeValue:dataToPrint withDelegate:self];
+    }
+}
+
+//@ReactMethod
+//public void printQRCode(String content, int size, int correctionLevel, final Promise promise) {
+//    try {
+//        Log.i(TAG, "生成的文本：" + content);
+//        // 把输入的文本转为二维码
+//        Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
+//        hints.put(EncodeHintType.CHARACTER_SET, "utf-8");
+//        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.forBits(correctionLevel));
+//        BitMatrix bitMatrix = new QRCodeWriter().encode(content,
+//                                                        BarcodeFormat.QR_CODE, size, size, hints);
+//
+//        int width = bitMatrix.getWidth();
+//        int height = bitMatrix.getHeight();
+//
+//        System.out.println("w:" + width + "h:"
+//                           + height);
+//
+//        int[] pixels = new int[width * height];
+//        for (int y = 0; y < height; y++) {
+//            for (int x = 0; x < width; x++) {
+//                if (bitMatrix.get(x, y)) {
+//                    pixels[y * width + x] = 0xff000000;
+//                } else {
+//                    pixels[y * width + x] = 0xffffffff;
+//                }
+//            }
+//        }
+//
+//        Bitmap bitmap = Bitmap.createBitmap(width, height,
+//                                            Bitmap.Config.ARGB_8888);
+//
+//        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+//
+//        byte[] data = PrintPicture.POS_PrintBMP(bitmap, size, 0);
+//        if (sendDataByte(data)) {
+//            promise.resolve(null);
+//        } else {
+//            promise.reject("COMMAND_NOT_SEND");
+//        }
+//    } catch (Exception e) {
+//        promise.reject(e.getMessage(), e);
+//    }
+//}
+
 
 - (void) didWriteDataToBle: (BOOL)success{
     if(success){
