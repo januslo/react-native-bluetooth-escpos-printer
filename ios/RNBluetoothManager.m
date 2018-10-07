@@ -17,23 +17,30 @@ NSString *EVENT_DEVICE_FOUND = @"EVENT_DEVICE_FOUND";
 NSString *EVENT_CONNECTION_LOST = @"EVENT_CONNECTION_LOST";
 NSString *EVENT_UNABLE_CONNECT=@"EVENT_UNABLE_CONNECT";
 NSString *EVENT_CONNECTED=@"EVENT_CONNECTED";
-static NSArray *supportServices = nil;
+static NSArray<CBUUID *> *supportServices = nil;
 static NSDictionary *writeableCharactiscs = nil;
 bool hasListeners;
 static CBPeripheral *connected;
+static RNBluetoothManager *instance;
+static NSObject<WriteDataToBleDelegate> *writeDataDelegate;// delegate of write data resule;
+static NSData *toWrite;
 
 +(Boolean)isConnected{
     return !(connected==nil);
 }
-+(Boolean)writeValue:(NSData *) data
+
++(void)writeValue:(NSData *) data withDelegate:(NSObject<WriteDataToBleDelegate> *) delegate
 {
     @try{
-    [connected writeValue:data forCharacteristic:[writeableCharactiscs objectForKey:supportServices[0]] type:CBCharacteristicWriteWithoutResponse];
-    return true;
+        writeDataDelegate = delegate;
+        toWrite = data;
+        connected.delegate = instance;
+        [connected discoverServices:supportServices];
+//    [connected writeValue:data forCharacteristic:[writeableCharactiscs objectForKey:supportServices[0]] type:CBCharacteristicWriteWithoutResponse];
     }
     @catch(NSException *e){
         NSLog(@"error in writing data to %@,issue:%@",connected,e);
-        return false;
+        [writeDataDelegate didWriteDataToBle:false];
     }
 }
 
@@ -125,8 +132,8 @@ RCT_EXPORT_METHOD(scanDevices:(RCTPromiseResolveBlock)resolve
         }
         self.scanResolveBlock = resolve;
         self.scanRejectBlock = reject;
-        [self.centralManager scanForPeripheralsWithServices:supportServices options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
-        NSLog(@"Scanning started");
+        [self.centralManager scanForPeripheralsWithServices:nil options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
+        NSLog(@"Scanning started with services: %@",supportServices);
     }
     @catch(NSException *exception){
         NSLog(@"ERROR IN STARTING SCANE %@",exception);
@@ -169,7 +176,12 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
         [self.centralManager stopScan];
         NSMutableArray *devices = [[NSMutableArray alloc] init];
         for(NSString *key in self.foundDevices){
-            [devices addObject:@{@"address":key,@"name":[self.foundDevices objectForKey:key].name}];
+            NSLog(@"insert found devies:%@ =>%@",key,[self.foundDevices objectForKey:key]);
+            NSString *name = [self.foundDevices objectForKey:key].name;
+            if(!name){
+                name = key;
+            }
+            [devices addObject:@{@"address":key,@"name":name}];
         }
         NSError *error = nil;
         NSData* jsonData = [NSJSONSerialization dataWithJSONObject:devices options:NSJSONWritingPrettyPrinted error:&error];
@@ -210,11 +222,17 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
                 self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil options: nil];
             }
         }
+        if(!instance){
+            instance = self;
+        }
     }
     [self initSupportServices];
     return _centralManager;
 }
 
+/**
+ * CBCentralManagerDelegate
+ **/
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central{
     NSLog(@"%ld",(long)central.state);
 }
@@ -238,6 +256,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral{
     NSLog(@"did connected: %@",peripheral);
+    connected = peripheral;
     NSString *pId = peripheral.identifier.UUIDString;
     if(_waitingConnect && [_waitingConnect isEqualToString: pId] && self.connectResolveBlock){
         NSLog(@"Predefined the support services, stop to looking up services.");
@@ -254,8 +273,13 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(nullable NSError *)error{
     if(self.connectRejectBlock){
+        @try{
         RCTPromiseRejectBlock rjBlock = self.connectRejectBlock;
          rjBlock(@"",@"",error);
+        }
+        @catch(NSException *e){
+            NSLog(@"DONT KNOW WHY ISSUE HERE: %@",[e callStackSymbols]);
+        }
         self.connectRejectBlock = nil;
         self.connectResolveBlock = nil;
     }
@@ -277,6 +301,10 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
         [self sendEventWithName:EVENT_UNABLE_CONNECT body:@{@"name":peripheral.name,@"address":peripheral.identifier.UUIDString}];
     }
     }
+
+/**
+ * END OF CBCentralManagerDelegate
+ **/
 
 /*!
  *  @method peripheral:didDiscoverServices:
@@ -332,6 +360,35 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
  *                        they can be retrieved via <i>service</i>'s <code>characteristics</code> property.
  */
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(nullable NSError *)error{
+    if(toWrite && connected
+       && [connected.identifier.UUIDString isEqualToString:peripheral.identifier.UUIDString]
+       && [service.UUID.UUIDString isEqualToString:supportServices[0].UUIDString]){
+        if(error){
+            NSLog(@"Discrover charactoreristics error:%@",error);
+           if(writeDataDelegate)
+           {
+               [writeDataDelegate didWriteDataToBle:false];
+               return;
+           }
+        }
+        for(CBCharacteristic *cc in service.characteristics){
+            NSLog(@"Characterstic found: %@ in service: %@" ,cc,service.UUID.UUIDString);
+            if([cc.UUID.UUIDString isEqualToString:[writeableCharactiscs objectForKey: supportServices[0]]]){
+                @try{
+                    [connected writeValue:toWrite forCharacteristic:cc type:CBCharacteristicWriteWithoutResponse];
+                   if(writeDataDelegate) [writeDataDelegate didWriteDataToBle:true];
+                    NSLog(@"Value wrote: %@",[[NSString alloc] initWithData:toWrite encoding:CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000)]);
+                }
+                @catch(NSException *e){
+                    NSLog(@"ERRO IN WRITE VALUE: %@",e);
+                      [writeDataDelegate didWriteDataToBle:false];
+                }
+            }
+        }
+        
+        
+    }
+    
     if(error){
         NSLog(@"Discrover charactoreristics error:%@",error);
         return;
@@ -391,48 +448,74 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 //    2018-10-01 21:29:24.434378+0800 bluetoothEscposPrinterExamples[8239:4598148] Indicate
 //    2018-10-01 21:29:24.434389+0800 bluetoothEscposPrinterExamples[8239:4598148] known properties: 62
     
-    for(CBCharacteristic *cc in service.characteristics){
-        NSLog(@"Characterstic found: %@ in service: %@" ,cc,service.UUID.UUIDString);
-        CBCharacteristicProperties pro = cc.properties;
-        Byte p = (Byte)pro;
-//        CBCharacteristicPropertyBroadcast                                                = 0x01,
-//        CBCharacteristicPropertyRead                                                    = 0x02,
-//        CBCharacteristicPropertyWriteWithoutResponse                                    = 0x04,
-//        CBCharacteristicPropertyWrite                                                    = 0x08,
-//        CBCharacteristicPropertyNotify                                                    = 0x10,
-//        CBCharacteristicPropertyIndicate                                                = 0x20,
-//        CBCharacteristicPropertyAuthenticatedSignedWrites                                = 0x40,
-//        CBCharacteristicPropertyExtendedProperties                                        = 0x80,
-//        CBCharacteristicPropertyNotifyEncryptionRequired NS_ENUM_AVAILABLE(10_9, 6_0)    = 0x100,
-//        CBCharacteristicPropertyIndicateEncryptionRequired NS_ENUM_AVAILABLE(10_9, 6_0)    = 0x200
-        if((p) & 0x01){
-            NSLog(@"Broadcast");
-        }
-        if((p>>1) & 0x01){
-            NSLog(@"Read");
-        }
-        if((p>>2) & 0x01){
-            NSLog(@"WriteWithoutResponse");
-        }
-        if((p>>3) & 0x01){
-            NSLog(@"Write");
-        }
-        if((p>>4) & 0x01){
-              NSLog(@"Notify");
-        }
-        if((p>>5) & 0x01){
-               NSLog(@"Indicate");
-        }
-        if((p>>6) & 0x01){
-            NSLog(@"AuthenticatedSignedWrites");
-        }
-        if((p>>7) & 0x01){
-            NSLog(@"ExtendedProperties");
-        }
-        {
-            NSLog(@"known properties: %lu", pro);
+//    for(CBCharacteristic *cc in service.characteristics){
+//       // NSLog(@"Characterstic found: %@ in service: %@" ,cc,service.UUID.UUIDString);
+//        CBCharacteristicProperties pro = cc.properties;
+//        Byte p = (Byte)pro;
+////        CBCharacteristicPropertyBroadcast                                                = 0x01,
+////        CBCharacteristicPropertyRead                                                    = 0x02,
+////        CBCharacteristicPropertyWriteWithoutResponse                                    = 0x04,
+////        CBCharacteristicPropertyWrite                                                    = 0x08,
+////        CBCharacteristicPropertyNotify                                                    = 0x10,
+////        CBCharacteristicPropertyIndicate                                                = 0x20,
+////        CBCharacteristicPropertyAuthenticatedSignedWrites                                = 0x40,
+////        CBCharacteristicPropertyExtendedProperties                                        = 0x80,
+////        CBCharacteristicPropertyNotifyEncryptionRequired NS_ENUM_AVAILABLE(10_9, 6_0)    = 0x100,
+////        CBCharacteristicPropertyIndicateEncryptionRequired NS_ENUM_AVAILABLE(10_9, 6_0)    = 0x200
+//        if((p) & 0x01){
+//            NSLog(@"Broadcast");
+//        }
+//        if((p>>1) & 0x01){
+//            NSLog(@"Read");
+//        }
+//        if((p>>2) & 0x01){
+//            NSLog(@"WriteWithoutResponse");
+//        }
+//        if((p>>3) & 0x01){
+//            NSLog(@"Write");
+//        }
+//        if((p>>4) & 0x01){
+//              NSLog(@"Notify");
+//        }
+//        if((p>>5) & 0x01){
+//               NSLog(@"Indicate");
+//        }
+//        if((p>>6) & 0x01){
+//            NSLog(@"AuthenticatedSignedWrites");
+//        }
+//        if((p>>7) & 0x01){
+//            NSLog(@"ExtendedProperties");
+//        }
+//        {
+//            NSLog(@"known properties: %lu", pro);
+//        }
+//    }
+}
+
+/*!
+ *  @method peripheral:didWriteValueForCharacteristic:error:
+ *
+ *  @param peripheral        The peripheral providing this information.
+ *  @param characteristic    A <code>CBCharacteristic</code> object.
+ *    @param error            If an error occurred, the cause of the failure.
+ *
+ *  @discussion                This method returns the result of a {@link writeValue:forCharacteristic:type:} call, when the <code>CBCharacteristicWriteWithResponse</code> type is used.
+ */
+- (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(nullable NSError *)error{
+    if(error){
+        NSLog(@"Error in writing bluetooth: %@",error);
+        if(writeDataDelegate){
+            [writeDataDelegate didWriteDataToBle:false];
+           // writeDataDelegate = nil;
         }
     }
+    
+    NSLog(@"Write bluetooth success.");
+    if(writeDataDelegate){
+        [writeDataDelegate didWriteDataToBle:true];
+       // writeDataDelegate = nil;
+    }
+    
 }
  
 @end

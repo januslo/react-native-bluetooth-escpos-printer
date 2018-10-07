@@ -308,7 +308,6 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
             }
         }
         promise.resolve(null);
-        // TODO: 2018/9/26 NEED FURTHER TESTING>>>>>>>>>>>>>>>>>>>>>>>>>>
     }
 
     @ReactMethod

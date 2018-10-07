@@ -254,7 +254,7 @@ public class PrinterCommand {
      * @return
      */
     public static byte[] POS_Set_Bold(int bold) {
-        byte[] escE = Arrays.copyOf(Command.ESC_E, Command.ESC_M.length);
+        byte[] escE = Arrays.copyOf(Command.ESC_E, Command.ESC_E.length);
         byte[] escG = Arrays.copyOf(Command.ESC_G, Command.ESC_G.length);
 
         escE[2] = (byte) bold;

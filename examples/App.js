@@ -80,10 +80,14 @@ if(Platform.OS === 'ios'){
 
     _deviceAlreadPaired(rsp) {
         var ds = null;
+      if(typeof(rsp.devices)=='object'){
+        ds = rsp.devices;
+      }else{
         try {
             ds = JSON.parse(rsp.devices);
         } catch (e) {
         }
+      }
         this.paired = ds || []
         this.setState({
             pairedDs: this.state.pairedDs.cloneWithRows(this.paired)
@@ -202,12 +206,13 @@ if(Platform.OS === 'ios'){
 
                 {this.state.bleOpend && this.state.boundAddress.length > 0 ? (
                     <Button disabled={this.state.loading} title="Print Receipt" onPress={async ()=>{
+                      try{
       await BluetoothEscposPrinter.printerInit();
       await BluetoothEscposPrinter.printerLeftSpace(0);
-      await BluetoothEscposPrinter.printBarCode("123456789012", BluetoothEscposPrinter.BARCODETYPE.UPC_A, 3, 168, 0, 2);
-      await  BluetoothEscposPrinter.printQRCode("你是不是傻?",280,BluetoothEscposPrinter.ERROR_CORRECTION.L);//.then(()=>{alert('done')},(err)=>{alert(err)});
+    //TODO //  await BluetoothEscposPrinter.printBarCode("123456789012", BluetoothEscposPrinter.BARCODETYPE.UPC_A, 3, 168, 0, 2);
+    //TODO //  await  BluetoothEscposPrinter.printQRCode("你是不是傻?",280,BluetoothEscposPrinter.ERROR_CORRECTION.L);//.then(()=>{alert('done')},(err)=>{alert(err)});
       await BluetoothEscposPrinter.printerUnderLine(2);
-      await  BluetoothEscposPrinter.printText("su me ma seeeee中国话\n\r",{
+      await  BluetoothEscposPrinter.printText("中国话\n\r",{
         encoding:'GBK',
         codepage:0,
         widthtimes:0,
@@ -292,7 +297,9 @@ if(Platform.OS === 'ios'){
       await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
       await  BluetoothEscposPrinter.printText("欢迎下次光临\n\r\n\r\n\r",{});
       await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
-
+}catch(e){
+  alert(e.message || "ERROR");
+}
 
   }}/>) : null}
 
@@ -365,7 +372,12 @@ if(Platform.OS === 'ios'){
         })
         BluetoothManager.scanDevices()
             .then((s)=> {
-                var ss = JSON.parse(s);
+                var ss = s;
+                try{
+                 ss = JSON.parse(s);
+               }catch(e){
+                 //ignore
+               }
                 this.setState({
                     pairedDs: this.state.pairedDs.cloneWithRows(ss.paired || []),
                     foundDs: this.state.foundDs.cloneWithRows(ss.found || []),

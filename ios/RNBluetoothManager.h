@@ -9,6 +9,11 @@
 #import <React/RCTEventEmitter.h>
 #import <CoreBluetooth/CoreBluetooth.h>
 
+@protocol WriteDataToBleDelegate <NSObject>
+@required
+- (void) didWriteDataToBle: (BOOL)success;
+@end
+
 @interface RNBluetoothManager <CBCentralManagerDelegate,CBPeripheralDelegate> : RCTEventEmitter <RCTBridgeModule>
 @property (strong, nonatomic) CBCentralManager      *centralManager;
 @property (nonatomic,copy) RCTPromiseResolveBlock scanResolveBlock;
@@ -17,7 +22,7 @@
 @property (strong,nonatomic) NSString *waitingConnect;
 @property (nonatomic,copy) RCTPromiseResolveBlock connectResolveBlock;
 @property (nonatomic,copy) RCTPromiseRejectBlock connectRejectBlock;
-+(Boolean)writeValue:(NSArray *) data;
++(void)writeValue:(NSData *) data withDelegate:(NSObject<WriteDataToBleDelegate> *) delegate;
 +(Boolean)isConnected;
 -(void)initSupportServices;
 -(void)callStop;
