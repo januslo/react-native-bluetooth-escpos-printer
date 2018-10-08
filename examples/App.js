@@ -209,8 +209,9 @@ if(Platform.OS === 'ios'){
                       try{
       await BluetoothEscposPrinter.printerInit();
       await BluetoothEscposPrinter.printerLeftSpace(0);
-    //TODO //  await BluetoothEscposPrinter.printBarCode("123456789012", BluetoothEscposPrinter.BARCODETYPE.UPC_A, 3, 168, 0, 2);
-     await  BluetoothEscposPrinter.printQRCode("你是不是傻?",280,BluetoothEscposPrinter.ERROR_CORRECTION.L);//.then(()=>{alert('done')},(err)=>{alert(err)});
+      await BluetoothEscposPrinter.printBarCode("123456789012", BluetoothEscposPrinter.BARCODETYPE.JAN13, 3, 120, 0, 2);
+     await  BluetoothEscposPrinter.printQRCode("你是不是傻？",280,BluetoothEscposPrinter.ERROR_CORRECTION.L);//.then(()=>{alert('done')},(err)=>{alert(err)});
+      await  BluetoothEscposPrinter.printText("\n\r",{});
       await BluetoothEscposPrinter.printerUnderLine(2);
       await  BluetoothEscposPrinter.printText("中国话\n\r",{
         encoding:'GBK',

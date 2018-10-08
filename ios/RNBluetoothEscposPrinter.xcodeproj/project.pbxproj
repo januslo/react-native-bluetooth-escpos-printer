@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		83A1E920216BA095004F0811 /* PrintImageBleWriteDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A1E91F216BA095004F0811 /* PrintImageBleWriteDelegate.m */; };
 		83B72B45216A0FEA007780F3 /* PrintColumnBleWriteDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 83B72B3B216A0FE9007780F3 /* PrintColumnBleWriteDelegate.m */; };
 		83B72B46216A0FEA007780F3 /* ColumnSplitedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 83B72B44216A0FEA007780F3 /* ColumnSplitedString.m */; };
 		83B72B48216A0FF4007780F3 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B72B47216A0FF4007780F3 /* UIKit.framework */; };
@@ -77,6 +78,8 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNBluetoothEscposPrinter.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNBluetoothEscposPrinter.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		83A1E918216BA094004F0811 /* PrintImageBleWriteDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PrintImageBleWriteDelegate.h; sourceTree = "<group>"; };
+		83A1E91F216BA095004F0811 /* PrintImageBleWriteDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PrintImageBleWriteDelegate.m; sourceTree = "<group>"; };
 		83B72B3B216A0FE9007780F3 /* PrintColumnBleWriteDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PrintColumnBleWriteDelegate.m; sourceTree = "<group>"; };
 		83B72B42216A0FEA007780F3 /* PrintColumnBleWriteDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PrintColumnBleWriteDelegate.h; sourceTree = "<group>"; };
 		83B72B43216A0FEA007780F3 /* ColumnSplitedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColumnSplitedString.h; sourceTree = "<group>"; };
@@ -119,6 +122,8 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				83A1E918216BA094004F0811 /* PrintImageBleWriteDelegate.h */,
+				83A1E91F216BA095004F0811 /* PrintImageBleWriteDelegate.m */,
 				83B72B74216A70D1007780F3 /* ImageUtils.h */,
 				83B72B7B216A70D1007780F3 /* ImageUtils.m */,
 				83B72B43216A0FEA007780F3 /* ColumnSplitedString.h */,
@@ -272,6 +277,7 @@
 				83B72B7C216A70D2007780F3 /* ImageUtils.m in Sources */,
 				83E5D47C215E57100009D216 /* RNBluetoothManager.m in Sources */,
 				83FAD6B12161C9C6001C4911 /* RNBluetoothTscPrinter.m in Sources */,
+				83A1E920216BA095004F0811 /* PrintImageBleWriteDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

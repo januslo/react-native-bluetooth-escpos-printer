@@ -7,6 +7,7 @@
 #import "PrintColumnBleWriteDelegate.h"
 #import "ImageUtils.h"
 #import "ZXingObjC/ZXingObjC.h"
+#import "PrintImageBleWriteDelegate.h"
 @implementation RNBluetoothEscposPrinter
 
 int WIDTH_58 = 384;
@@ -474,17 +475,24 @@ RCT_EXPORT_METHOD(printPic:(NSString *) base64encodeStr
         @try{
             NSData *decoded = [[NSData alloc] initWithBase64EncodedString:base64encodeStr options:0 ];
             UIImage *srcImage = [[UIImage alloc] initWithData:decoded scale:1];
+            NSData *jpgData = UIImageJPEGRepresentation(srcImage, 1);
+            UIImage *jpgImage = [[UIImage alloc] initWithData:jpgData];
             //mBitmap.getHeight() * width / mBitmap.getWidth();
-            NSInteger imgHeight = srcImage.size.height;
-            NSInteger imagWidth = srcImage.size.width;
-            CGSize size = CGSizeMake(_deviceWidth, imgHeight*_deviceWidth/imagWidth);
-            UIImage *scaled = [ImageUtils imageWithImage:srcImage scaledToFillSize:size];
+            NSInteger imgHeight = jpgImage.size.height;
+            NSInteger imagWidth = jpgImage.size.width;
+            NSInteger width = ((int)(((_deviceWidth*0.86)+7)/8))*8-7;
+            CGSize size = CGSizeMake(width, imgHeight*width/imagWidth);
+            UIImage *scaled = [ImageUtils imageWithImage:jpgImage scaledToFillSize:size];
             unsigned char * graImage = [ImageUtils imageToGreyImage:scaled];
             unsigned char * formatedData = [ImageUtils format_K_threshold:graImage width:size.width height:size.height];
-            NSData *dataToPrint = [ImageUtils eachLinePixToCmd:[NSData dataWithBytes:formatedData length:sizeof(formatedData)] nWidth:size.width nHeight:size.height nMode:0];
-            pendingResolve = resolve;
-            pendingReject = reject;
-            [RNBluetoothManager writeValue:dataToPrint withDelegate:self];
+            NSData *dataToPrint = [ImageUtils eachLinePixToCmd:formatedData nWidth:size.width nHeight:size.height nMode:0];
+            PrintImageBleWriteDelegate *delegate = [[PrintImageBleWriteDelegate alloc] init];
+            delegate.pendingResolve=resolve;
+            delegate.pendingReject = reject;
+            delegate.width = width;
+            delegate.toPrint  = dataToPrint;
+            delegate.now = 0;
+            [delegate print];
         }
         @catch(NSException *e){
             NSLog(@"ERROR IN PRINTING IMG: %@",[e callStackSymbols]);
@@ -495,30 +503,6 @@ RCT_EXPORT_METHOD(printPic:(NSString *) base64encodeStr
     }
 }
 
-//@ReactMethod
-//public void printPic(String base64encodeStr) {
-//    byte[] bytes = Base64.decode(base64encodeStr, Base64.DEFAULT);
-//    Bitmap mBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-//    int nMode = 0;
-//    if (mBitmap != null) {
-//        /**
-//         * Parameters:
-//         * mBitmap  要打印的图片
-//         * nWidth   打印宽度（58和80）
-//         * nMode    打印模式
-//         * Returns: byte[]
-//         */
-//        byte[] data = PrintPicture.POS_PrintBMP(mBitmap, deviceWidth, nMode);
-//        //    SendDataByte(buffer);
-//        sendDataByte(Command.ESC_Init);
-//        sendDataByte(Command.LF);
-//        sendDataByte(data);
-//        sendDataByte(PrinterCommand.POS_Set_PrtAndFeedPaper(30));
-//        sendDataByte(PrinterCommand.POS_Set_Cut(1));
-//        sendDataByte(PrinterCommand.POS_Set_PrtInit());
-//    }
-//}
-
 RCT_EXPORT_METHOD(printQRCode:(NSString *)content
                   withSize:(NSInteger) size
                   correctionLevel:(NSInteger) correctionLevel
@@ -527,81 +511,93 @@ RCT_EXPORT_METHOD(printQRCode:(NSString *)content
 {
     NSLog(@"QRCODE TO PRINT: %@",content);
     NSError *error = nil;
+    ZXEncodeHints *hints = [ZXEncodeHints hints];
+    hints.encoding=NSUTF8StringEncoding;
+    hints.margin=0;
+    hints.errorCorrectionLevel = [self findCorrectionLevel:correctionLevel];
+    
     ZXMultiFormatWriter *writer = [ZXMultiFormatWriter writer];
     ZXBitMatrix *result = [writer encode:content
                                   format:kBarcodeFormatQRCode
-                                   width:size
-                                  height:size
+                                   width:(int)size
+                                  height:(int)size
+                                    hints:hints
                                    error:&error];
     if(error || !result){
         reject(@"ERROR_IN_CREATE_QRCODE",@"ERROR_IN_CREATE_QRCODE",nil);
     }else{
-//        NSInteger height = [result height];
-//        NSInteger width = [result width];
-//        unsigned int *pixels = malloc(height*width);
-//                for (int y = 0; y < height; y++) {
-//                    for (int x = 0; x < width; x++) {
-//                        if ([result getX:x y:y]) {
-//                            pixels[y * width + x] = 0xff000000;
-//                        } else {
-//                            pixels[y * width + x] = 0xffffffff;
-//                        }
-//                    }
-//                }
-          CGImageRef image = [[ZXImage imageWithMatrix:result] cgimage];
-        unsigned char * graImage = [ImageUtils imageToGreyImage:[UIImage imageWithCGImage:image]];
+        CGImageRef image = [[ZXImage imageWithMatrix:result] cgimage];
+        uint8_t * graImage = [ImageUtils imageToGreyImage:[UIImage imageWithCGImage:image]];
         unsigned char * formatedData = [ImageUtils format_K_threshold:graImage width:size height:size];
-        NSData *dataToPrint = [ImageUtils eachLinePixToCmd:[NSData dataWithBytes:formatedData length:sizeof(formatedData)] nWidth:size nHeight:size nMode:0];
-        pendingResolve = resolve;
-        pendingReject = reject;
-        [RNBluetoothManager writeValue:dataToPrint withDelegate:self];
+        NSData *dataToPrint = [ImageUtils eachLinePixToCmd:formatedData nWidth:size nHeight:size nMode:0];
+        PrintImageBleWriteDelegate *delegate = [[PrintImageBleWriteDelegate alloc] init];
+        delegate.pendingResolve=resolve;
+        delegate.pendingReject = reject;
+        delegate.width = size;
+        delegate.toPrint  = dataToPrint;
+        delegate.now = 0;
+        [delegate print];
     }
 }
 
-//@ReactMethod
-//public void printQRCode(String content, int size, int correctionLevel, final Promise promise) {
-//    try {
-//        Log.i(TAG, "生成的文本：" + content);
-//        // 把输入的文本转为二维码
-//        Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
-//        hints.put(EncodeHintType.CHARACTER_SET, "utf-8");
-//        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.forBits(correctionLevel));
-//        BitMatrix bitMatrix = new QRCodeWriter().encode(content,
-//                                                        BarcodeFormat.QR_CODE, size, size, hints);
-//
-//        int width = bitMatrix.getWidth();
-//        int height = bitMatrix.getHeight();
-//
-//        System.out.println("w:" + width + "h:"
-//                           + height);
-//
-//        int[] pixels = new int[width * height];
-//        for (int y = 0; y < height; y++) {
-//            for (int x = 0; x < width; x++) {
-//                if (bitMatrix.get(x, y)) {
-//                    pixels[y * width + x] = 0xff000000;
-//                } else {
-//                    pixels[y * width + x] = 0xffffffff;
-//                }
-//            }
-//        }
-//
-//        Bitmap bitmap = Bitmap.createBitmap(width, height,
-//                                            Bitmap.Config.ARGB_8888);
-//
-//        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
-//
-//        byte[] data = PrintPicture.POS_PrintBMP(bitmap, size, 0);
-//        if (sendDataByte(data)) {
-//            promise.resolve(null);
-//        } else {
-//            promise.reject("COMMAND_NOT_SEND");
-//        }
-//    } catch (Exception e) {
-//        promise.reject(e.getMessage(), e);
-//    }
-//}
-
+RCT_EXPORT_METHOD(printBarCode:(NSString *) str withType:(NSInteger)
+                  nType width:(NSInteger) nWidth heigth:(NSInteger) nHeight
+                  hriFontType:(NSInteger) nHriFontType hriFontPosition:(NSInteger) nHriFontPosition
+                  andResolver:(RCTPromiseResolveBlock) resolve
+                  rejecter:(RCTPromiseRejectBlock) reject)
+{
+    if (nType < 0x41 | nType > 0x49 | nWidth < 2 | nWidth > 6
+        | nHeight < 1 | nHeight > 255 | (!str||[str length]<1))
+      {
+          reject(@"INVALID_PARAMETER",@"INVALID_PARAMETER",nil);
+          return;
+      }
+    
+    NSData *conentData = [str dataUsingEncoding:CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000)];
+    NSMutableData *toPrint = [[NSMutableData alloc] init];
+    int8_t * command = malloc(16);
+        command[0] = 29 ;//GS
+        command[1] = 119;//W
+        command[2] = nWidth;
+        command[3] = 29;//GS
+        command[4] = 104;//h
+        command[5] = nHeight;
+        command[6] = 29;//GS
+        command[7] = 102;//f
+        command[8] = (nHriFontType & 0x01);
+        command[9] = 29;//GS
+        command[10] = 72;//H
+        command[11] = (nHriFontPosition & 0x03);
+        command[12] = 29;//GS
+        command[13] = 107;//k
+        command[14] = nType;
+        command[15] = [conentData length];
+    [toPrint appendBytes:command length:16];
+    [toPrint appendData:conentData];
+    
+    pendingReject = reject;
+    pendingResolve = resolve;
+    [RNBluetoothManager writeValue:toPrint withDelegate:self];
+}
+//  L:1,
+//M:0,
+//Q:3,
+//H:2
+-(ZXQRCodeErrorCorrectionLevel *)findCorrectionLevel:(NSInteger)level
+{
+    switch (level) {
+        case 1:
+            return [[ZXQRCodeErrorCorrectionLevel alloc] initWithOrdinal:0 bits:0x01 name:@"L"];
+            break;
+        case 2:
+             return [[ZXQRCodeErrorCorrectionLevel alloc] initWithOrdinal:3 bits:0x02 name:@"H"];
+        case 3:
+             return [[ZXQRCodeErrorCorrectionLevel alloc] initWithOrdinal:2 bits:0x03 name:@"Q"];
+        default:
+             return [[ZXQRCodeErrorCorrectionLevel alloc] initWithOrdinal:1 bits:0x00 name:@"M"];
+            break;
+    }
+}
 
 - (void) didWriteDataToBle: (BOOL)success{
     if(success){
