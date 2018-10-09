@@ -177,7 +177,7 @@ if(Platform.OS === 'ios'){
                         direction: BluetoothTscPrinter.DIRECTION.FORWARD,
                         reference: [0, 0],
                         tear: BluetoothTscPrinter.TEAR.ON,
-                        sound: 0,
+                        sound: 1,
                         text: [{
                             text: 'I am a testing txt',
                             x: 20,

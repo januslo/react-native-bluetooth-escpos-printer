@@ -6,7 +6,8 @@
 //  Copyright © 2018年 Facebook. All rights reserved.
 //
 #import <React/RCTBridgeModule.h>
-@interface RNBluetoothTscPrinter : NSObject <RCTBridgeModule>
+#import "RNBluetoothManager.h"
+@interface RNBluetoothTscPrinter : NSObject <RCTBridgeModule,WriteDataToBleDelegate>
 
 @end
 

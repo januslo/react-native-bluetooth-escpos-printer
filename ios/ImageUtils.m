@@ -246,5 +246,16 @@ int p6[] = { 0, 0x02 };
    // NSLog(@"despixels [with 1 count:%d]: %@",oneCount,logStr);
     return despixels;
 }
++(NSData *)pixToTscCmd:(uint8_t *)src width:(NSInteger) width
+{
+    int length = (int)width/8;
+    uint8_t * data = malloc(length);
+    int k = 0;
+    for(int j = 0;k<length;++k){
+        data[k] =(uint8_t)(p0[src[j]] + p1[src[j + 1]] + p2[src[j + 2]] + p3[src[j + 3]] + p4[src[j + 4]] + p5[src[j + 5]] + p6[src[j + 6]] + src[j + 7]);
+        j+=8;
+    }
+    return [[NSData alloc] initWithBytes:data length:length];
+}
 
 @end
