@@ -58,6 +58,10 @@ implements BluetoothServiceStateObserver{
         if (options.hasKey("sound") && options.getInt("sound") == 1) {
             sound = true;
         }
+        boolean home = false;
+        if(options.hasKey("home") && options.getInt("home")== 1){
+            home = true;
+        }
         TscCommand tsc = new TscCommand();
         if(speed != null){
             tsc.addSpeed(speed);//设置打印速度
@@ -75,6 +79,10 @@ implements BluetoothServiceStateObserver{
             tsc.addReference(0, 0);
         }
         tsc.addTear(enable); //撕纸模式开启
+        if(home) {
+            tsc.addBackFeed(16);
+            tsc.addHome();//走纸到开始位置
+        }
         tsc.addCls();// 清除打印缓冲区
         //绘制简体中文
         for (int i = 0;texts!=null&& i < texts.size(); i++) {

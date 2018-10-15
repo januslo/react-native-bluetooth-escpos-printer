@@ -139,19 +139,18 @@ public class BluetoothService {
     public synchronized void connect(BluetoothDevice device) {
         if (DEBUG) Log.d(TAG, "connect to: " + device);
 
-        // Cancel any thread attempting to make a connection
-        if (mState == STATE_CONNECTING) {
-            if (mConnectThread != null) {
-                mConnectThread.cancel();
-                mConnectThread = null;
-            }
-        }
-
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
+        // Cancel any thread attempting to make a connection
+       // if (mState == STATE_CONNECTING) {
+            if (mConnectThread != null) {
+                mConnectThread.cancel();
+                mConnectThread = null;
+            }
+       // }
 
         // Start the thread to connect with the given device
         mConnectThread = new ConnectThread(device);
@@ -339,8 +338,11 @@ public class BluetoothService {
             // given BluetoothDevice
             try {
                 tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) {
+            } catch (IOException e) {e.printStackTrace();
                 Log.e(TAG, "create() failed", e);
+            }
+            if(tmp==null){
+                Log.e(TAG, "create() failed: Socket NULL.");
             }
             mmSocket = tmp;
         }
@@ -358,7 +360,7 @@ public class BluetoothService {
                 // This is a blocking call and will only return on a
                 // successful connection or an exception
                 mmSocket.connect();
-            } catch (IOException e) {
+            } catch (IOException e) {e.printStackTrace();
                 connectionFailed();
                 // Close the socket
                 try {

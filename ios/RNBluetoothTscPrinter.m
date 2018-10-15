@@ -31,6 +31,7 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
     NSInteger width = [[options valueForKey:@"width"] integerValue];
     NSInteger height = [[options valueForKey:@"height"] integerValue];
     NSInteger gap = [[options valueForKey:@"gap"] integerValue];
+    NSInteger home = [[options valueForKey:@"home"] integerValue];
     NSString *tear = [options valueForKey:@"tear"];
     if(!tear || ![@"ON" isEqualToString:tear]) tear = @"OFF";
     NSArray *texts = [options objectForKey:@"text"];
@@ -62,8 +63,12 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
         [tsc addReference:0 y:0];
     }
     [tsc addTear:tear];
+    if(home && home == 1){
+      [tsc addBackFeed:16];
+      [tsc addHome];
+    }
     [tsc addCls];
-    
+
     //Add Texts
     for(int i=0; texts && i<[texts count];i++){
         NSDictionary * text = [texts objectAtIndex:i];
@@ -75,7 +80,7 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
         NSInteger xscal = [[text valueForKey:@"xscal"] integerValue];
         NSInteger yscal = [[text valueForKey:@"yscal"] integerValue];
         Boolean bold = [[text valueForKey:@"bold"] boolValue];
-        
+
         [tsc addText:x y:y fontType:fontType rotation:rotation xscal:xscal yscal:yscal text:t];
         if(bold){
             [tsc addText:x+1 y:y fontType:fontType
@@ -97,7 +102,7 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
             UIImage *uiImage = [[UIImage alloc] initWithData:imageData];
             [tsc addBitmap:x y:y bitmapMode:mode width:imgWidth bitmap:uiImage];
         }
-    
+
     //QRCode
     for (int i = 0; qrCodes && i < [qrCodes count]; i++) {
         NSDictionary *qr = [qrCodes objectAtIndex:i];
@@ -110,7 +115,7 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
         NSString *code = [qr valueForKey:@"code"];
         [tsc addQRCode:x y:y errorCorrectionLevel:level width:qrWidth rotation:rotation code:code];
     }
-    
+
     //BarCode
    for (int i = 0; barCodes && i < [barCodes count]; i++) {
        NSDictionary *bar = [barCodes objectAtIndex:i];
