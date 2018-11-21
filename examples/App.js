@@ -306,7 +306,7 @@ if(Platform.OS === 'ios'){
     {this.state.bleOpend && this.state.boundAddress.length > 0 ? (
       <Button disabled={this.state.loading} title="ESC Print Image" onPress={async()=>{
         try{
-            await BluetoothEscposPrinter.printPic(base64Image);
+            await BluetoothEscposPrinter.printPic(base64Image,{});
         }catch(e){
           alert(e.message || "ERROR")
         }

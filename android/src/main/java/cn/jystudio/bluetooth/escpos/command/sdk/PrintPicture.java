@@ -26,6 +26,15 @@ public class PrintPicture {
         return resizedBitmap;
     }
 
+    public static Bitmap pad(Bitmap Src, int padding_x, int padding_y) {
+        Bitmap outputimage = Bitmap.createBitmap(Src.getWidth() + padding_x,Src.getHeight() + padding_y, Bitmap.Config.ARGB_8888);
+        Canvas can = new Canvas(outputimage);
+        can.drawARGB(255,255,255,255); //This represents White color
+        can.drawBitmap(Src, padding_x, padding_y, null);
+        return outputimage;
+    }
+
+
     /**
      * 打印位图函数
      * 此函数是将一行作为一个图片打印，这样处理不容易出错
@@ -35,11 +44,12 @@ public class PrintPicture {
      * @param nMode
      * @return
      */
-    public static byte[] POS_PrintBMP(Bitmap mBitmap, int nWidth, int nMode) {
+    public static byte[] POS_PrintBMP(Bitmap mBitmap, int nWidth, int nMode, int leftPadding) {
         // 先转黑白，再调用函数缩放位图
         int width = ((nWidth + 7) / 8) * 8;
         int height = mBitmap.getHeight() * width / mBitmap.getWidth();
         height = ((height + 7) / 8) * 8;
+        int left = leftPadding == 0 ? 0 : ((leftPadding+7) / 8) * 8;
 
         Bitmap rszBitmap = mBitmap;
         if (mBitmap.getWidth() != width) {
@@ -47,10 +57,13 @@ public class PrintPicture {
         }
 
         Bitmap grayBitmap = toGrayscale(rszBitmap);
+        if(left>0){
+            grayBitmap = pad(grayBitmap,left,0);
+        }
 
         byte[] dithered = thresholdToBWPic(grayBitmap);
 
-        byte[] data = eachLinePixToCmd(dithered, width, nMode);
+        byte[] data = eachLinePixToCmd(dithered, width+left, nMode);
 
         return data;
     }

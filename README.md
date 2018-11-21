@@ -381,6 +381,7 @@ let options = {
 
 #### printerAlign(int align) ####
   set the printer alignment, constansts: BluetoothEscposPrinter.ALIGN.LEFT/BluetoothEscposPrinter.ALIGN.CENTER/BluetoothEscposPrinter.ALIGN.RIGHT.
+  Not works ant printPic() method.
 
 #### printText(String text, ReadableMap options) ####
   print text, options as following:
@@ -400,8 +401,9 @@ let options = {
 #### setWidth(int width) ####
   sets the widht of the printer.
 
-#### printPic(String base64encodeStr) ####
+#### printPic(String base64encodeStr,ReadableMap options) ####
   prints the image which encoded by base64, without schema.
+  * options: contains the params that may use in printing pic: "with":the pic with,basic on devices width(dots,58mm-384); "left":the left padding of the pic,for the printing position adjustment.
 
 #### setfTest() ####
   prints the selft test.

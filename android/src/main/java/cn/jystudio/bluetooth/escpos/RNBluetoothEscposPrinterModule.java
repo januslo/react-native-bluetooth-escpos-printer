@@ -316,7 +316,19 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
     }
 
     @ReactMethod
-    public void printPic(String base64encodeStr) {
+    public void printPic(String base64encodeStr, @Nullable  ReadableMap options) {
+        int width = 0;
+        int leftPadding = 0;
+        if(options!=null){
+            width = options.hasKey("width") ? options.getInt("width") : 0;
+            leftPadding = options.hasKey("left")?options.getInt("left") : 0;
+        }
+
+        //cannot larger then devicesWith;
+        if(width > deviceWidth || width == 0){
+            width = deviceWidth;
+        }
+
         byte[] bytes = Base64.decode(base64encodeStr, Base64.DEFAULT);
         Bitmap mBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         int nMode = 0;
@@ -328,7 +340,7 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
              * nMode    打印模式
              * Returns: byte[]
              */
-            byte[] data = PrintPicture.POS_PrintBMP(mBitmap, deviceWidth, nMode);
+            byte[] data = PrintPicture.POS_PrintBMP(mBitmap, width, nMode, leftPadding);
             //	SendDataByte(buffer);
             sendDataByte(Command.ESC_Init);
             sendDataByte(Command.LF);
@@ -403,7 +415,8 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
 
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
 
-            byte[] data = PrintPicture.POS_PrintBMP(bitmap, size, 0);
+            //TODO: may need a left padding to align center.
+            byte[] data = PrintPicture.POS_PrintBMP(bitmap, size, 0, 0);
             if (sendDataByte(data)) {
                 promise.resolve(null);
             } else {
