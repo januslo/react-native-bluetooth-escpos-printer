@@ -15,9 +15,7 @@ import java.util.*;
 
 /**
  * This class does all the work for setting up and managing Bluetooth
- * connections with other devices. It has a thread that listens for
- * incoming connections, a thread for connecting with a device, and a
- * thread for performing data transmissions when connected.
+ * connections with other devices.
  */
 public class BluetoothService {
     // Debugging
@@ -34,14 +32,13 @@ public class BluetoothService {
     // Member fields
     private BluetoothAdapter mAdapter;
 
-    private AcceptThread mAcceptThread;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
     private int mState;
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
-    public static final int STATE_LISTEN = 1;     // now listening for incoming connections
+   // public static final int STATE_LISTEN = 1;     // now listening for incoming connections //feathure removed.
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
@@ -86,9 +83,20 @@ public class BluetoothService {
      * @param state An integer defining the current connection state
      */
     private synchronized void setState(int state, Map<String, Object> bundle) {
-        if (DEBUG) Log.d(TAG, "setState() " + mState + " -> " + state);
+        if (DEBUG) Log.d(TAG, "setState() " + getStateName(mState) + " -> " + getStateName(state));
         mState = state;
         infoObervers(state, bundle);
+    }
+    private String getStateName(int state){
+        String name="UNKNOW:" + state;
+        if(STATE_NONE == state){
+            name="STATE_NONE";
+        }else if(STATE_CONNECTED == state){
+            name="STATE_CONNECTED";
+        }else if(STATE_CONNECTING ==  state){
+            name="STATE_CONNECTING";
+        }
+        return name;
     }
 
     private synchronized void infoObervers(int code, Map<String, Object> bundle) {
@@ -104,32 +112,6 @@ public class BluetoothService {
         return mState;
     }
 
-    /**
-     * Start the service. Specifically start AcceptThread to begin a
-     * session in listening (server) mode. Called by the Activity onResume()
-     */
-    public synchronized void start() {
-        if (DEBUG) Log.d(TAG, "start");
-
-        // Cancel any thread attempting to make a connection
-        if (mConnectThread != null) {
-            mConnectThread.cancel();
-            mConnectThread = null;
-        }
-
-        // Cancel any thread currently running a connection
-        if (mConnectedThread != null) {
-            mConnectedThread.cancel();
-            mConnectedThread = null;
-        }
-
-        // Start the thread to listen on a BluetoothServerSocket
-        if (mAcceptThread == null) {
-            mAcceptThread = new AcceptThread();
-            mAcceptThread.start();
-        }
-        setState(STATE_LISTEN, null);
-    }
 
     /**
      * Start the ConnectThread to initiate a connection to a remote device.
@@ -179,12 +161,6 @@ public class BluetoothService {
             mConnectedThread = null;
         }
 
-        // Cancel the accept thread because we only want to connect to one device
-        if (mAcceptThread != null) {
-            mAcceptThread.cancel();
-            mAcceptThread = null;
-        }
-
         // Start the thread to manage the connection and perform transmissions
         mConnectedThread = new ConnectedThread(socket);
         mConnectedThread.start();
@@ -209,10 +185,6 @@ public class BluetoothService {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
-        if (mAcceptThread != null) {
-            mAcceptThread.cancel();
-            mAcceptThread = null;
-        }
     }
 
     /**
@@ -236,7 +208,7 @@ public class BluetoothService {
      * Indicate that the connection attempt failed.
      */
     private void connectionFailed() {
-        setState(STATE_LISTEN, null);
+        setState(STATE_NONE, null);
         infoObervers(MESSAGE_UNABLE_CONNECT, null);
     }
 
@@ -246,80 +218,6 @@ public class BluetoothService {
     private void connectionLost() {
         infoObervers(MESSAGE_CONNECTION_LOST, null);
     }
-
-    /**
-     * This thread runs while listening for incoming connections. It behaves
-     * like a server-side client. It runs until a connection is accepted
-     * (or until cancelled).
-     */
-    private class AcceptThread extends Thread {
-        // The local server socket
-        private final BluetoothServerSocket mmServerSocket;
-
-        public AcceptThread() {
-            BluetoothServerSocket tmp = null;
-
-            // Create a new listening server socket
-            try {
-                tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME, MY_UUID);
-            } catch (IOException e) {
-                Log.e(TAG, "listen() failed", e);
-            }
-            mmServerSocket = tmp;
-        }
-
-        @Override
-        public void run() {
-            if (DEBUG) Log.d(TAG, "BEGIN mAcceptThread" + this);
-            setName("AcceptThread");
-            BluetoothSocket socket = null;
-
-            // Listen to the server socket if we're not connected
-            while (mState != STATE_CONNECTED) {
-                try {
-                    // This is a blocking call and will only return on a
-                    // successful connection or an exception
-                    socket = mmServerSocket.accept();
-                } catch (Exception e) {
-                    Log.e(TAG, "accept() failed", e);
-                    break;
-                }
-
-                // If a connection was accepted
-                if (socket != null) {
-                    synchronized (BluetoothService.this) {
-                        switch (mState) {
-                            case STATE_LISTEN:
-                            case STATE_CONNECTING:
-                                // Situation normal. Start the connected thread.
-                                connected(socket, socket.getRemoteDevice());
-                                break;
-                            case STATE_NONE:
-                            case STATE_CONNECTED:
-                                // Either not ready or already connected. Terminate new socket.
-                                try {
-                                    socket.close();
-                                } catch (IOException e) {
-                                    Log.e(TAG, "Could not close unwanted socket", e);
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
-            if (DEBUG) Log.i(TAG, "END mAcceptThread");
-        }
-
-        public void cancel() {
-            if (DEBUG) Log.d(TAG, "cancel " + this);
-            try {
-                mmServerSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "close() of server failed", e);
-            }
-        }
-    }
-
 
     /**
      * This thread runs while attempting to make an outgoing connection
@@ -368,8 +266,6 @@ public class BluetoothService {
                 } catch (IOException e2) {
                     Log.e(TAG, "unable to close() socket during connection failure", e2);
                 }
-                // Start the service over to restart listening mode
-                BluetoothService.this.start();
                 return;
             }
 
@@ -437,24 +333,11 @@ public class BluetoothService {
                     } else {
                         Log.e(TAG, "disconnected");
                         connectionLost();
-
-                        //add by chongqing jinou
-                        if (mState != STATE_NONE) {
-                            Log.e(TAG, "disconnected");
-                            // Start the service over to restart listening mode
-                            BluetoothService.this.start();
-                        }
                         break;
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
-
-                    //add by chongqing jinou
-                    if (mState != STATE_NONE) {
-                        // Start the service over to restart listening mode
-                        BluetoothService.this.start();
-                    }
                     break;
                 }
             }
@@ -486,6 +369,7 @@ public class BluetoothService {
         public void cancel() {
             try {
                 mmSocket.close();
+                connectionLost();
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
