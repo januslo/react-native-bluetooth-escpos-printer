@@ -18,6 +18,22 @@ int p4[] = { 0, 0x08 };
 int p5[] = { 0, 0x04 };
 int p6[] = { 0, 0x02 };
 
++ (UIImage*)imagePadLeft:(NSInteger) left withSource: (UIImage*)source
+{
+    CGSize orgSize = [source size];
+    CGSize size = CGSizeMake(orgSize.width + [[NSNumber numberWithInteger: left] floatValue], orgSize.height);
+    UIGraphicsBeginImageContext(size);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetFillColorWithColor(context,
+                                   [[UIColor whiteColor] CGColor]);
+    CGContextFillRect(context, CGRectMake(0, 0, size.width, size.height));
+    [source drawInRect:CGRectMake(left, 0, orgSize.width, orgSize.height)
+             blendMode:kCGBlendModeNormal alpha:1.0];
+    UIImage *paddedImage =  UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return paddedImage;
+}
+
 +(uint8_t *)imageToGreyImage:(UIImage *)image {
     // Create image rectangle with current image width/height
     int kRed = 1;
@@ -175,7 +191,7 @@ int p6[] = { 0, 0x02 };
 + (NSData *)eachLinePixToCmd:(unsigned char *)src nWidth:(NSInteger) nWidth nHeight:(NSInteger) nHeight nMode:(NSInteger) nMode
 {
     NSLog(@"SIZE OF SRC: %lu",sizeof(&src));
-    NSInteger nBytesPerLine = (nWidth+7)/8;
+    NSInteger nBytesPerLine = (int)nWidth/8;
     unsigned char * data = malloc(nHeight*(8+nBytesPerLine));
    // const char* srcData = (const char*)[src bytes];
     NSInteger k = 0;

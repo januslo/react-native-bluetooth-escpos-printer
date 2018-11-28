@@ -90,9 +90,12 @@ static NSData *toWrite;
  **/
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[EVENT_DEVICE_DISCOVER_DONE,EVENT_DEVICE_FOUND,
-             EVENT_UNABLE_CONNECT,EVENT_CONNECTION_LOST,
-             EVENT_CONNECTED,EVENT_DEVICE_ALREADY_PAIRED];
+    return @[EVENT_DEVICE_DISCOVER_DONE,
+             EVENT_DEVICE_FOUND,
+             EVENT_UNABLE_CONNECT,
+             EVENT_CONNECTION_LOST,
+             EVENT_CONNECTED,
+             EVENT_DEVICE_ALREADY_PAIRED];
 }
 
 
@@ -264,6 +267,8 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 //        [peripheral discoverServices:nil];
         self.connectResolveBlock(nil);
         _waitingConnect = nil;
+        self.connectRejectBlock = nil;
+        self.connectResolveBlock = nil;
     }
        NSLog(@"going to emit EVEnT_CONNECTED.");
     if(hasListeners){
@@ -285,7 +290,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
     }
     connected = nil;
     if(hasListeners){
-        [self sendEventWithName:EVENT_UNABLE_CONNECT body:@{@"name":peripheral.name,@"address":peripheral.identifier.UUIDString}];
+        [self sendEventWithName:EVENT_CONNECTION_LOST body:nil];
     }
     }
 

@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 @interface ImageUtils :NSObject
++ (UIImage*)imagePadLeft:(NSInteger) left withSource: (UIImage*)source;
 + (uint8_t *)imageToGreyImage:(UIImage *)image;
 + (UIImage *)imageWithImage:(UIImage *)image scaledToFillSize:(CGSize)size;
 + (NSData*)bitmapToArray:(UIImage*) bmp;
