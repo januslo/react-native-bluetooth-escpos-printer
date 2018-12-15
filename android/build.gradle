@@ -51,7 +51,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:0.55+'
+    implementation 'com.facebook.react:react-native:0.57'
     implementation group: 'com.android.support', name: 'support-v4', version: '27.0.0'
     implementation "com.google.zxing:core:3.3.0"
 }
