@@ -120,24 +120,35 @@ public class BluetoothService {
      */
     public synchronized void connect(BluetoothDevice device) {
         if (DEBUG) Log.d(TAG, "connect to: " + device);
-
-        // Cancel any thread currently running a connection
-        if (mConnectedThread != null) {
-            mConnectedThread.cancel();
-            mConnectedThread = null;
+        BluetoothDevice connectedDevice = null;
+        if(mConnectedThread!=null){
+            connectedDevice = mConnectedThread.bluetoothDevice();
         }
-        // Cancel any thread attempting to make a connection
-       // if (mState == STATE_CONNECTING) {
+        if( mState==STATE_CONNECTED && connectedDevice!=null && connectedDevice.getAddress().equals(device.getAddress())){
+            // connected already
+            Map<String, Object> bundle = new HashMap<String, Object>();
+            bundle.put(DEVICE_NAME, device.getName());
+
+            setState(STATE_CONNECTED, bundle);
+        }else {
+            // Cancel any thread currently running a connection
+            if (mConnectedThread != null) {
+                mConnectedThread.cancel();
+                mConnectedThread = null;
+            }
+            // Cancel any thread attempting to make a connection
+            // if (mState == STATE_CONNECTING) {
             if (mConnectThread != null) {
                 mConnectThread.cancel();
                 mConnectThread = null;
             }
-       // }
+            // }
 
-        // Start the thread to connect with the given device
-        mConnectThread = new ConnectThread(device);
-        mConnectThread.start();
-        setState(STATE_CONNECTING, null);
+            // Start the thread to connect with the given device
+            mConnectThread = new ConnectThread(device);
+            mConnectThread.start();
+            setState(STATE_CONNECTING, null);
+        }
     }
 
     /**
@@ -216,6 +227,7 @@ public class BluetoothService {
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
+        setState(STATE_NONE, null);
         infoObervers(MESSAGE_CONNECTION_LOST, null);
     }
 
@@ -363,6 +375,14 @@ public class BluetoothService {
                 infoObervers(MESSAGE_WRITE, bundle);
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
+            }
+        }
+
+        public BluetoothDevice bluetoothDevice(){
+            if(mmSocket!=null && mmSocket.isConnected()){
+                return mmSocket.getRemoteDevice();
+            }else{
+                return null;
             }
         }
 
