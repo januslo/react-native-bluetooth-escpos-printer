@@ -132,7 +132,7 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
                 } catch (Exception e) {
                     //ignore.
                 }
-            }
+            }Log.d(TAG,"ble Enabled");
             promise.resolve(pairedDeivce);
         }
     }
@@ -191,8 +191,8 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
     public void connect(String address, final Promise promise) {
         if (mBluetoothAdapter.isEnabled()) {
             BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-            mService.connect(device);
             promiseMap.put(PROMISE_CONNECT, promise);
+            mService.connect(device);
         } else {
             promise.reject("BT NOT ENABLED");
         }
@@ -374,29 +374,31 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
 
     @Override
     public void onBluetoothServiceStateChanged(int state, Map<String, Object> bundle) {
+        Log.d(TAG,"on bluetoothServiceStatChange:"+state);
         switch (state) {
             case BluetoothService.STATE_CONNECTED:
             case MESSAGE_DEVICE_NAME: {
                 // save the connected device's name
                 mConnectedDeviceName = (String) bundle.get(DEVICE_NAME);
                 Promise p = promiseMap.remove(PROMISE_CONNECT);
-                if (p == null) {
+                if (p == null) {   Log.d(TAG,"No Promise found.");
                     WritableMap params = Arguments.createMap();
                     params.putString(DEVICE_NAME, mConnectedDeviceName);
                     emitRNEvent(EVENT_CONNECTED, params);
-                } else {
+                } else { Log.d(TAG,"Promise Resolve.");
                     p.resolve(mConnectedDeviceName);
                 }
 
                 break;
             }
             case MESSAGE_CONNECTION_LOST: {
-                Promise p = promiseMap.remove(PROMISE_CONNECT);
-                if (p == null) {
+                //Connection lost should not be the connect result.
+               // Promise p = promiseMap.remove(PROMISE_CONNECT);
+               // if (p == null) {
                     emitRNEvent(EVENT_CONNECTION_LOST, null);
-                } else {
-                    p.reject("Device connection was lost");
-                }
+               // } else {
+                 //   p.reject("Device connection was lost");
+                //}
                 break;
             }
             case MESSAGE_UNABLE_CONNECT: {     //无法连接设备
