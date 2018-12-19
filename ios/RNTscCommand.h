@@ -49,6 +49,7 @@
 
 -(void)add1DBarcode:(NSInteger) x y:(NSInteger) y
         barcodeType:(NSString *) type height:(NSInteger) height
+        wide:(NSInteger) wide narrow:(NSInteger) narrow
            readable:(NSInteger) readable rotation:(NSInteger) rotation
             content:(NSString *) content;
 -(void)addQRCode:(NSInteger) x y:(NSInteger) y errorCorrectionLevel:(NSString *) level

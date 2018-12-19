@@ -315,6 +315,10 @@ BluetoothTscPrinter.printLable(options)
       rotation, the same as text.
      * code
       the code to generate and print, should follow the restriction of the code type using.
+     * wide
+     the wide bar lines width (dot)
+     * narrow
+     the narrow bar line widht (dot)
 
 ##### image #####
     the collection of the image to print.
