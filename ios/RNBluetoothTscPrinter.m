@@ -121,8 +121,8 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
        NSDictionary *bar = [barCodes objectAtIndex:i];
        NSInteger x = [[bar valueForKey:@"x"] integerValue];
        NSInteger y = [[bar valueForKey:@"y"] integerValue];
-       NSInteger barWidth =[[bar valueForKey:@"width"] integerValue];
-       if(!barWidth) barWidth = 2;
+       NSInteger barWide =[[bar valueForKey:@"wide"] integerValue];
+       if(!barWidth) barWide = 2;
        NSInteger barHeight = [[bar valueForKey:@"height"] integerValue];
        NSInteger narrow = [[bar valueForKey:@"narrow"] integerValue];
        if(!narrow) narrow = 2;
@@ -130,7 +130,7 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
        NSString *code = [bar valueForKey:@"code"];
        NSString *type = [bar valueForKey:@"type"];
        NSInteger readable = [[bar valueForKey:@"readable"] integerValue];
-       [tsc add1DBarcode:x y:y barcodeType:type height:barHeight width:barWidth narrow:narrow readable:readable rotation:rotation content:code];
+       [tsc add1DBarcode:x y:y barcodeType:type height:barHeight wide:barWide narrow:narrow readable:readable rotation:rotation content:code];
     }
     for(int i=0; reverses&& i < [reverses count]; i++){
         NSDictionary *area = [reverses objectAtIndex:i];
