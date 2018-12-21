@@ -122,7 +122,7 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
        NSInteger x = [[bar valueForKey:@"x"] integerValue];
        NSInteger y = [[bar valueForKey:@"y"] integerValue];
        NSInteger barWide =[[bar valueForKey:@"wide"] integerValue];
-       if(!barWidth) barWide = 2;
+       if(!barWide) barWide = 2;
        NSInteger barHeight = [[bar valueForKey:@"height"] integerValue];
        NSInteger narrow = [[bar valueForKey:@"narrow"] integerValue];
        if(!narrow) narrow = 2;
