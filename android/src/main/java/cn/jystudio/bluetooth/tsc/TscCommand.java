@@ -369,13 +369,11 @@ public class TscCommand {
         addStrToCommand(str);
     }
 
-    public void add1DBarcode(int x, int y, BARCODETYPE type, int height, READABLE readable, ROTATION rotation,
+    public void add1DBarcode(int x, int y, BARCODETYPE type, int height, int wide, int narrow, READABLE readable, ROTATION rotation,
                              String content) {
-        int narrow = 2;
-        int width = 2;
         String str = new String();
         str = "BARCODE " + x + "," + y + "," + "\"" + type.getValue() + "\"" + "," + height + "," + readable.getValue()
-                + "," + rotation.getValue() + "," + narrow + "," + width + "," + "\"" + content + "\"" + "\r\n";
+                + "," + rotation.getValue() + "," + narrow + "," + wide + "," + "\"" + content + "\"" + "\r\n";
         addStrToCommand(str);
     }
 

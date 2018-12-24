@@ -146,14 +146,16 @@ implements BluetoothServiceStateObserver{
         if (barCodes != null) {
             for (int i = 0; i < barCodes.size(); i++) {
                 ReadableMap bar = barCodes.getMap(i);
-                int x = bar.getInt("x");
-                int y = bar.getInt("y");
-                int barHeight = bar.getInt("height");
+                int x = bar.hasKey("x") ? bar.getInt("x") : 0;
+                int y = bar.hasKey("y") ? bar.getInt("y") : 0;
+                int barHeight = bar.hasKey("height") ? bar.getInt("height") : 200;
+                int barWide = bar.hasKey("wide") ? bar.getInt("wide") : 2;
+                int narrow = bar.hasKey("narrow") ? bar.getInt("narrow") : 1;
                 TscCommand.ROTATION rotation = this.findRotation(bar.getInt("rotation"));
                 String code = bar.getString("code");
                 TscCommand.BARCODETYPE type = this.findBarcodeType(bar.getString("type"));
                 TscCommand.READABLE readable = this.findReadable(bar.getInt("readable"));
-                tsc.add1DBarcode(x, y, type, barHeight, readable, rotation, code);
+                tsc.add1DBarcode(x, y, type, barHeight, barWide, narrow, readable, rotation, code);
             }
         }
 

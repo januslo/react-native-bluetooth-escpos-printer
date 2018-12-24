@@ -136,8 +136,8 @@ public class PrinterCommand {
         if (left > 255 | left < 0) return null;
 
         byte[] data = Arrays.copyOf(Command.GS_LeftSp, Command.GS_LeftSp.length);
-        data[2] = (byte) (left % 100);
-        data[3] = (byte) (left / 100);
+        data[2] = (byte) (left % 0x100);
+        data[3] = (byte) (left / 0x100);
         return data;
     }
 
@@ -165,8 +165,8 @@ public class PrinterCommand {
         if (width < 0 | width > 255) return null;
 
         byte[] data = Arrays.copyOf(Command.GS_W, Command.GS_W.length);
-        data[2] = (byte) (width % 100);
-        data[3] = (byte) (width / 100);
+        data[2] = (byte) (width % 0x100);
+        data[3] = (byte) (width / 0x100);
         return data;
     }
 
