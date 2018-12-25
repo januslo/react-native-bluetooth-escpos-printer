@@ -129,13 +129,27 @@ RCT_EXPORT_METHOD(scanDevices:(RCTPromiseResolveBlock)resolve
     @try{
         if(!self.centralManager || self.centralManager.state!=CBManagerStatePoweredOn){
             reject(@"BLUETOOTCH_INVALID_STATE",@"BLUETOOTCH_INVALID_STATE",nil);
+            return;
         }
         if(self.centralManager.isScanning){
             [self.centralManager stopScan];
         }
         self.scanResolveBlock = resolve;
         self.scanRejectBlock = reject;
+        if(connected && connected.identifier){
+            NSDictionary *idAndName =@{@"address":connected.identifier.UUIDString,@"name":connected.name?connected.name:connected.identifier.UUIDString};
+            NSDictionary *peripheralStored = @{connected.identifier.UUIDString:connected};
+            if(!self.foundDevices){
+                self.foundDevices = [[NSMutableDictionary alloc] init];
+            }
+            [self.foundDevices addEntriesFromDictionary:peripheralStored];
+            if(hasListeners){
+                [self sendEventWithName:EVENT_DEVICE_FOUND body:@{@"device":idAndName}];
+            }
+        }
         [self.centralManager scanForPeripheralsWithServices:nil options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
+        //Callbacks:
+        //centralManager:didDiscoverPeripheral:advertisementData:RSSI:
         NSLog(@"Scanning started with services: %@",supportServices);
     }
     @catch(NSException *exception){
@@ -159,16 +173,32 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 {
     NSLog(@"Trying to connect....%@",address);
     [self callStop];
+    if(connected){
+        NSString *connectedAddress =connected.identifier.UUIDString;
+        if([address isEqualToString:connectedAddress]){
+            resolve(nil);
+            return;
+        }else{
+            [self.centralManager cancelPeripheralConnection:connected];
+            //Callbacks:
+            //entralManager:didDisconnectPeripheral:error:
+        }
+    }
     CBPeripheral *peripheral = [self.foundDevices objectForKey:address];
     self.connectResolveBlock = resolve;
     self.connectRejectBlock = reject;
     if(peripheral){
           _waitingConnect = address;
         [self.centralManager connectPeripheral:peripheral options:nil];
+        // Callbacks:
+        //    centralManager:didConnectPeripheral:
+        //    centralManager:didFailToConnectPeripheral:error:
     }else{
           //starts the scan.
         _waitingConnect = address;
         [self.centralManager scanForPeripheralsWithServices:supportServices options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
+        //Callbacks:
+        //centralManager:didDiscoverPeripheral:advertisementData:RSSI:
     }
 }
 //unpaire(address)
@@ -277,22 +307,11 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 }
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(nullable NSError *)error{
-    if(self.connectRejectBlock){
-        @try{
-        RCTPromiseRejectBlock rjBlock = self.connectRejectBlock;
-         rjBlock(@"",@"",error);
-        }
-        @catch(NSException *e){
-            NSLog(@"DONT KNOW WHY ISSUE HERE: %@",[e callStackSymbols]);
-        }
-        self.connectRejectBlock = nil;
-        self.connectResolveBlock = nil;
-    }
     connected = nil;
     if(hasListeners){
         [self sendEventWithName:EVENT_CONNECTION_LOST body:nil];
     }
-    }
+}
 
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(nullable NSError *)error{
     if(self.connectRejectBlock){
@@ -330,8 +349,6 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
     for (CBService *service in peripheral.services) {
         [peripheral discoverCharacteristics:nil forService:service];
          NSLog(@"服务id：%@",service.UUID.UUIDString);
-        //添加到数组
-        //[self.serviceArray addObject:service];
     }
     NSLog(@"开始扫描外设服务的特征 %@...",peripheral.name);
     
@@ -348,9 +365,6 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
         self.connectRejectBlock = nil;
         self.connectResolveBlock = nil;
         connected = peripheral;
-//        for(CBService s:peripheral.services){
-//
-//        }
     }
 }
 
@@ -513,16 +527,13 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
         NSLog(@"Error in writing bluetooth: %@",error);
         if(writeDataDelegate){
             [writeDataDelegate didWriteDataToBle:false];
-           // writeDataDelegate = nil;
         }
     }
     
     NSLog(@"Write bluetooth success.");
     if(writeDataDelegate){
         [writeDataDelegate didWriteDataToBle:true];
-       // writeDataDelegate = nil;
     }
-    
 }
  
 @end
