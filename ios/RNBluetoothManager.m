@@ -137,7 +137,7 @@ RCT_EXPORT_METHOD(scanDevices:(RCTPromiseResolveBlock)resolve
         self.scanResolveBlock = resolve;
         self.scanRejectBlock = reject;
         if(connected && connected.identifier){
-            NSDictionary *idAndName =@{@"address":connected.identifier.UUIDString,@"name":connected.name?connected.name:connected.identifier.UUIDString};
+            NSDictionary *idAndName =@{@"address":connected.identifier.UUIDString,@"name":connected.name?connected.name:@""};
             NSDictionary *peripheralStored = @{connected.identifier.UUIDString:connected};
             if(!self.foundDevices){
                 self.foundDevices = [[NSMutableDictionary alloc] init];
@@ -212,7 +212,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
             NSLog(@"insert found devies:%@ =>%@",key,[self.foundDevices objectForKey:key]);
             NSString *name = [self.foundDevices objectForKey:key].name;
             if(!name){
-                name = key;
+                name = @"";
             }
             [devices addObject:@{@"address":key,@"name":name}];
         }
@@ -272,7 +272,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *, id> *)advertisementData RSSI:(NSNumber *)RSSI{
     NSLog(@"did discover peripheral: %@",peripheral);
-    NSDictionary *idAndName =@{@"address":peripheral.identifier.UUIDString,@"name":peripheral.name?peripheral.name:peripheral.identifier.UUIDString};
+    NSDictionary *idAndName =@{@"address":peripheral.identifier.UUIDString,@"name":peripheral.name?peripheral.name:@""};
     NSDictionary *peripheralStored = @{peripheral.identifier.UUIDString:peripheral};
     if(!self.foundDevices){
         self.foundDevices = [[NSMutableDictionary alloc] init];
@@ -300,9 +300,9 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
         self.connectRejectBlock = nil;
         self.connectResolveBlock = nil;
     }
-       NSLog(@"going to emit EVEnT_CONNECTED.");
+       NSLog(@"going to emit EVENT_CONNECTED.");
     if(hasListeners){
-        [self sendEventWithName:EVENT_CONNECTED body:@{@"device":@{@"name":peripheral.name,@"address":peripheral.identifier.UUIDString}}];
+        [self sendEventWithName:EVENT_CONNECTED body:@{@"device":@{@"name":peripheral.name?peripheral.name:@"",@"address":peripheral.identifier.UUIDString}}];
     }
 }
 
@@ -322,7 +322,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
     }
     connected = nil;
     if(hasListeners){
-        [self sendEventWithName:EVENT_UNABLE_CONNECT body:@{@"name":peripheral.name,@"address":peripheral.identifier.UUIDString}];
+        [self sendEventWithName:EVENT_UNABLE_CONNECT body:@{@"name":peripheral.name?peripheral.name:@"",@"address":peripheral.identifier.UUIDString}];
     }
     }
 
