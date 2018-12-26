@@ -189,6 +189,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
     self.connectRejectBlock = reject;
     if(peripheral){
           _waitingConnect = address;
+          NSLog(@"Trying to connectPeripheral....%@",address);
         [self.centralManager connectPeripheral:peripheral options:nil];
         // Callbacks:
         //    centralManager:didConnectPeripheral:
@@ -196,7 +197,8 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
     }else{
           //starts the scan.
         _waitingConnect = address;
-        [self.centralManager scanForPeripheralsWithServices:supportServices options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
+         NSLog(@"Scan to find ....%@",address);
+        [self.centralManager scanForPeripheralsWithServices:nil options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
         //Callbacks:
         //centralManager:didDiscoverPeripheral:advertisementData:RSSI:
     }
@@ -281,7 +283,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
     if(hasListeners){
         [self sendEventWithName:EVENT_DEVICE_FOUND body:@{@"device":idAndName}];
     }
-    if(_waitingConnect && _waitingConnect == peripheral.identifier.UUIDString){
+    if(_waitingConnect && [_waitingConnect isEqualToString: peripheral.identifier.UUIDString]){
         [self.centralManager connectPeripheral:peripheral options:nil];
         [self callStop];
     }
@@ -307,9 +309,23 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 }
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(nullable NSError *)error{
-    connected = nil;
-    if(hasListeners){
-        [self sendEventWithName:EVENT_CONNECTION_LOST body:nil];
+    if(!connected && _waitingConnect && [_waitingConnect isEqualToString:peripheral.identifier.UUIDString]){
+        if(self.connectRejectBlock){
+            RCTPromiseRejectBlock rjBlock = self.connectRejectBlock;
+            rjBlock(@"",@"",error);
+            self.connectRejectBlock = nil;
+            self.connectResolveBlock = nil;
+            _waitingConnect=nil;
+        }
+        connected = nil;
+        if(hasListeners){
+            [self sendEventWithName:EVENT_UNABLE_CONNECT body:@{@"name":peripheral.name?peripheral.name:@"",@"address":peripheral.identifier.UUIDString}];
+        }
+    }else{
+        connected = nil;
+        if(hasListeners){
+            [self sendEventWithName:EVENT_CONNECTION_LOST body:nil];
+        }
     }
 }
 
@@ -319,6 +335,7 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
         rjBlock(@"",@"",error);
         self.connectRejectBlock = nil;
         self.connectResolveBlock = nil;
+        _waitingConnect = nil;
     }
     connected = nil;
     if(hasListeners){
