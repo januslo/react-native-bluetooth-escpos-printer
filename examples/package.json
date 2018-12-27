@@ -9,6 +9,7 @@
     "dateformat": "^3.0.3",
     "react": "^16.5.2",
     "react-native": "0.55.4",
-    "react-native-bluetooth-escpos-printer": "../"
+    "react-native-bluetooth-escpos-printer": "../",
+    "react-native-deprecated-custom-components": "^0.1.2"
   }
 }
