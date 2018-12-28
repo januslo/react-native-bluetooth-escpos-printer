@@ -14,7 +14,8 @@ import {ActivityIndicator,
     NativeEventEmitter,
     Switch,
     TouchableOpacity,
-    Dimensions} from 'react-native';
+    Dimensions,
+    ToastAndroid} from 'react-native';
 import {BluetoothEscposPrinter, BluetoothManager, BluetoothTscPrinter} from "../index";
 import EscPos from "./escpos";
 import Tsc from "./tsc";
@@ -78,6 +79,11 @@ export default class Home extends Component {
                         name: '',
                         boundAddress: ''
                     });
+                }
+            ));
+            this._listeners.push(DeviceEventEmitter.addListener(
+                BluetoothManager.EVENT_BLUETOOTH_NOT_SUPPORT, ()=> {
+                    ToastAndroid.show("Device Not Support Bluetooth !", ToastAndroid.LONG);
                 }
             ))
         }
