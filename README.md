@@ -163,6 +163,7 @@ async function, disconnect and unpaire the specified devices
 | EVENT_CONNECTION_LOST | Emits when device connection lost |
 | EVENT_UNABLE_CONNECT | Emits when error occurs while trying to connect device |
 | EVENT_CONNECTED | Emits when device connected |
+| EVENT_BLUETOOTH_NOT_SUPPORT | Emits when device not support bluetooth(android only) |
 
 ### BluetoothTscPrinter ###
 The printer for label printing.
