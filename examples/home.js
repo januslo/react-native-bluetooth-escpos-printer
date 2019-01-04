@@ -16,7 +16,7 @@ import {ActivityIndicator,
     TouchableOpacity,
     Dimensions,
     ToastAndroid} from 'react-native';
-import {BluetoothEscposPrinter, BluetoothManager, BluetoothTscPrinter} from "../index";
+import {BluetoothEscposPrinter, BluetoothManager, BluetoothTscPrinter} from "react-native-bluetooth-escpos-printer";
 import EscPos from "./escpos";
 import Tsc from "./tsc";
 
@@ -90,9 +90,9 @@ export default class Home extends Component {
     }
 
     componentWillUnmount() {
-        for (let ls in this._listeners) {
-            this._listeners[ls].remove();
-        }
+        //for (let ls in this._listeners) {
+        //    this._listeners[ls].remove();
+        //}
     }
 
     _deviceAlreadPaired(rsp) {
@@ -127,11 +127,19 @@ export default class Home extends Component {
         }
         //alert('f')
         if (r) {
-            let found = this.state.foundDs;
-            found.push(r);
-            this.setState({
-                foundDs: found
-            });
+            let found = this.state.foundDs || [];
+            if(found.findIndex) {
+                let duplicated = found.findIndex(function (x) {
+                    return x.address == r.address
+                });
+                //CHECK DEPLICATED HERE...
+                if (duplicated == -1) {
+                    found.push(r);
+                    this.setState({
+                        foundDs: found
+                    });
+                }
+            }
         }
     }
 
@@ -139,8 +147,9 @@ export default class Home extends Component {
         let items = [];
         for(let i in rows){
             let row = rows[i];
-            items.push(
-                <TouchableOpacity key={new Date().getTime()} stlye={styles.wtf}  onPress={()=>{
+            if(row.address) {
+                items.push(
+                    <TouchableOpacity key={new Date().getTime()+i} stlye={styles.wtf} onPress={()=>{
                     this.setState({
                         loading:true
                     });
@@ -158,9 +167,10 @@ export default class Home extends Component {
                             alert(e);
                         })
 
-                }}><Text style={styles.name}>{row.name || "UNKNOWN"}</Text><Text style={styles.address}>{row.address}</Text></TouchableOpacity>
-
-            );
+                }}><Text style={styles.name}>{row.name || "UNKNOWN"}</Text><Text
+                        style={styles.address}>{row.address}</Text></TouchableOpacity>
+                );
+            }
         }
         return items;
     }
@@ -277,14 +287,17 @@ export default class Home extends Component {
         BluetoothManager.scanDevices()
             .then((s)=> {
                 var ss = s;
+                var found = ss.found;
                 try {
-                    ss = JSON.parse(s);
+                    found = JSON.parse(found);//@FIX_it: the parse action too weired..
                 } catch (e) {
                     //ignore
                 }
-                var fds = ss.found || this.state.foundDs;
+                var fds =  this.state.foundDs;
+                if(found && found.length){
+                    fds = found;
+                }
                 this.setState({
-                   // pairedDs: this.state.pairedDs.cloneWithRows(pds),
                     foundDs:fds,
                     loading: false
                 });

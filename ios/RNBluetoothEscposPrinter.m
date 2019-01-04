@@ -50,6 +50,10 @@ RCTPromiseRejectBlock pendingReject;
 {
     return dispatch_get_main_queue();
 }
++ (BOOL)requiresMainQueueSetup
+{
+    return YES;
+}
 
 
 /**
@@ -186,11 +190,9 @@ RCT_EXPORT_METHOD(printText:(NSString *) text withOptions:(NSDictionary *) optio
     }
 }
 -(NSStringEncoding) toNSEncoding:(NSString *)encoding
-{
-    NSStringEncoding nsEncoding = NSUTF8StringEncoding;
-    if([@"GBK" isEqualToString:encoding] || [@"gbk" isEqualToString:encoding]){
-        nsEncoding = CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000);
-    }else if([@"UTF-8" isEqualToString:encoding] || [@"utf-8" isEqualToString:encoding] ){
+{NSLog(@"encoding: %@",encoding);
+    NSStringEncoding nsEncoding = CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000);
+    if([@"UTF-8" isEqualToString:encoding] || [@"utf-8" isEqualToString:encoding] ){
         nsEncoding = NSUTF8StringEncoding;
     }
     
@@ -204,9 +206,9 @@ RCT_EXPORT_METHOD(printText:(NSString *) text withOptions:(NSDictionary *) optio
          fontType:(NSInteger) fontType
      delegate:(NSObject<WriteDataToBleDelegate> *) delegate
 {
-    NSArray *intToWidth = @[@0x00, @0x10, @0x20, @0x30];
-    NSArray *intToHeight = @[@0x00, @0x01, @0x02, @0x03];
-    NSInteger multTime = (int)[intToWidth objectAtIndex:widthTimes]+ (int)[intToHeight objectAtIndex:heightTimes];
+    Byte *intToWidth[] = {0x00, 0x10, 0x20, 0x30};
+    Byte *intToHeight[] = {0x00, 0x01, 0x02, 0x03};
+    Byte *multTime[] = {intToWidth[widthTimes],intToHeight[heightTimes]};
     NSData *bytes = [text dataUsingEncoding:[self toNSEncoding:encoding]];
     NSLog(@"Got bytes length:%lu",[bytes length]);
     
@@ -215,7 +217,7 @@ RCT_EXPORT_METHOD(printText:(NSString *) text withOptions:(NSDictionary *) optio
     //gsExclamationMark:{GS, '!', 0x00 };
     [toSend appendBytes:ESC_GS length:sizeof(ESC_GS)];
     [toSend appendBytes:SIGN length:sizeof(SIGN)];
-    [toSend appendBytes:&multTime length:sizeof(multTime)];
+    [toSend appendBytes:multTime length:sizeof(multTime)];
     //escT:  {ESC, 't', 0x00 };
     [toSend appendBytes:ESC length:sizeof(ESC)];
     [toSend appendBytes:T length:sizeof(T)];
@@ -230,7 +232,7 @@ RCT_EXPORT_METHOD(printText:(NSString *) text withOptions:(NSDictionary *) optio
         [toSend appendBytes:ESC_FS length:sizeof(ESC_FS)];
         [toSend appendBytes:&fourtySix length:sizeof(fourtySix)];
     }
-    //escM:{ESC, 'M', 0x00 };
+//    escM:{ESC, 'M', 0x00 };
     [toSend appendBytes:ESC length:sizeof(ESC)];
     [toSend appendBytes:M length:sizeof(M)];
     [toSend appendBytes:&fontType length:sizeof(fontType)];
@@ -240,6 +242,7 @@ RCT_EXPORT_METHOD(printText:(NSString *) text withOptions:(NSDictionary *) optio
    // [toSend appendBytes:&NL length:sizeof(NL)];
   
     NSLog(@"Goting to write text : %@",text);
+    NSLog(@"With data: %@",toSend);
     [RNBluetoothManager writeValue:toSend withDelegate:delegate];
 }
 

@@ -24,6 +24,7 @@ static CBPeripheral *connected;
 static RNBluetoothManager *instance;
 static NSObject<WriteDataToBleDelegate> *writeDataDelegate;// delegate of write data resule;
 static NSData *toWrite;
+static NSTimer *timer;
 
 +(Boolean)isConnected{
     return !(connected==nil);
@@ -84,6 +85,10 @@ static NSData *toWrite;
     return dispatch_get_main_queue();
 }
 
++ (BOOL)requiresMainQueueSetup
+{
+    return YES;
+}
 
 /**
  * Defines the event would be emited.
@@ -150,7 +155,13 @@ RCT_EXPORT_METHOD(scanDevices:(RCTPromiseResolveBlock)resolve
         [self.centralManager scanForPeripheralsWithServices:nil options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
         //Callbacks:
         //centralManager:didDiscoverPeripheral:advertisementData:RSSI:
-        NSLog(@"Scanning started with services: %@",supportServices);
+        NSLog(@"Scanning started with services.");
+        if(timer && timer.isValid){
+            [timer invalidate];
+            timer = nil;
+        }
+        timer = [NSTimer scheduledTimerWithTimeInterval:30 target:self selector:@selector(callStop) userInfo:nil repeats:NO];
+    
     }
     @catch(NSException *exception){
         NSLog(@"ERROR IN STARTING SCANE %@",exception);
@@ -229,6 +240,10 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
             rsBlock(@{@"found":jsonStr,@"paired":@"[]"});
             self.scanResolveBlock = nil;
         }
+    }
+    if(timer && timer.isValid){
+        [timer invalidate];
+        timer = nil;
     }
     self.scanRejectBlock = nil;
     self.scanResolveBlock = nil;
