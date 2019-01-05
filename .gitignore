@@ -47,3 +47,5 @@ buck-out/
 
 ios/ZXingObjC-3.2.2/examples/
 ios/ZXingObjC-3.2.2/ZXingObjCTests/
+
+android/src/main/gen/
