@@ -172,7 +172,7 @@ The printer for label printing.
 async function the perform label print action.
 
 ```javascript
-BluetoothTscPrinter.printLable(options)
+BluetoothTscPrinter.printLabel(options)
 .then(()=>{
     //success
 },
