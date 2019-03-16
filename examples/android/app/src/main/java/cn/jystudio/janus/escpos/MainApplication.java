@@ -1,4 +1,4 @@
-package com.examples;
+package cn.jystudio.janus.escpos;
 
 import android.app.Application;
 

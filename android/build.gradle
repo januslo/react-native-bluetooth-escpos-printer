@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         jcenter { url "http://jcenter.bintray.com/" }
+        maven {url "http://repo.spring.io/plugins-release/"}
         mavenCentral()
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -40,6 +41,7 @@ android {
 
 repositories {
     jcenter { url "http://jcenter.bintray.com/" }
+    maven {url "http://repo.spring.io/plugins-release/"}
     mavenCentral()
     maven {
         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -51,7 +53,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:+'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.facebook.react:react-native:+'  // From node_modules
     implementation group: 'com.android.support', name: 'support-v4', version: '27.0.0'
     implementation "com.google.zxing:core:3.3.0"
 }
