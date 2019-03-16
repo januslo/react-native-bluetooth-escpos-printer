@@ -42,6 +42,7 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
     public static final String EVENT_CONNECTION_LOST = "EVENT_CONNECTION_LOST";
     public static final String EVENT_UNABLE_CONNECT = "EVENT_UNABLE_CONNECT";
     public static final String EVENT_CONNECTED = "EVENT_CONNECTED";
+    public static final String EVENT_BLUETOOTH_NOT_SUPPORT = "EVENT_BLUETOOTH_NOT_SUPPORT";
 
 
     // Intent request codes
@@ -85,16 +86,6 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         this.reactContext.registerReceiver(discoverReceiver, filter);
-
-        // Get local Bluetooth adapter
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-
-        // If the adapter is null, then Bluetooth is not supported
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(this.reactContext, "Bluetooth is not available",
-                    Toast.LENGTH_LONG).show();
-        }
     }
 
     @Override
@@ -108,23 +99,41 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
         constants.put(EVENT_CONNECTION_LOST, EVENT_CONNECTION_LOST);
         constants.put(EVENT_UNABLE_CONNECT, EVENT_UNABLE_CONNECT);
         constants.put(EVENT_CONNECTED, EVENT_CONNECTED);
+        constants.put(EVENT_BLUETOOTH_NOT_SUPPORT, EVENT_BLUETOOTH_NOT_SUPPORT);
         constants.put(DEVICE_NAME, DEVICE_NAME);
+        constants.put(EVENT_BLUETOOTH_NOT_SUPPORT, EVENT_BLUETOOTH_NOT_SUPPORT);
         return constants;
+    }
+
+    private BluetoothAdapter getBluetoothAdapter(){
+        if(mBluetoothAdapter == null){
+            // Get local Bluetooth adapter
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        }
+        // If the adapter is null, then Bluetooth is not supported
+        if (mBluetoothAdapter == null) {
+            emitRNEvent(EVENT_BLUETOOTH_NOT_SUPPORT,  Arguments.createMap());
+        }
+
+        return mBluetoothAdapter;
     }
 
 
     @ReactMethod
     public void enableBluetooth(final Promise promise) {
-        // If Bluetooth is not on, request that it be enabled.
-        // setupChat() will then be called during onActivityResult
-        if (!mBluetoothAdapter.isEnabled()) {
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
+        if(adapter == null){
+            promise.reject(EVENT_BLUETOOTH_NOT_SUPPORT);
+        }else if (!adapter.isEnabled()) {
+            // If Bluetooth is not on, request that it be enabled.
+            // setupChat() will then be called during onActivityResult
             Intent enableIntent = new Intent(
                     BluetoothAdapter.ACTION_REQUEST_ENABLE);
             promiseMap.put(PROMISE_ENABLE_BT, promise);
             this.reactContext.startActivityForResult(enableIntent, REQUEST_ENABLE_BT, Bundle.EMPTY);
         } else {
-            WritableArray pairedDeivce = Arguments.createArray();
-            Set<BluetoothDevice> boundDevices = mBluetoothAdapter.getBondedDevices();
+            WritableArray pairedDeivce =Arguments.createArray();
+            Set<BluetoothDevice> boundDevices = adapter.getBondedDevices();
             for (BluetoothDevice d : boundDevices) {
                 try {
                     JSONObject obj = new JSONObject();
@@ -142,58 +151,70 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
 
     @ReactMethod
     public void disableBluetooth(final Promise promise) {
-        if (mService != null && mService.getState() != BluetoothService.STATE_NONE) {
-            mService.stop();
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
+        if(adapter == null){
+            promise.resolve(true);
+        }else {
+            if (mService != null && mService.getState() != BluetoothService.STATE_NONE) {
+                mService.stop();
+            }
+            promise.resolve(!adapter.isEnabled() || adapter.disable());
         }
-        promise.resolve(!mBluetoothAdapter.isEnabled() || mBluetoothAdapter.disable());
     }
 
     @ReactMethod
     public void isBluetoothEnabled(final Promise promise) {
-        promise.resolve(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled());
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
+        promise.resolve(adapter!=null && adapter.isEnabled());
     }
 
     @ReactMethod
     public void scanDevices(final Promise promise) {
-        cancelDisCovery();
-        int permissionChecked = ContextCompat.checkSelfPermission(reactContext, android.Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (permissionChecked == PackageManager.PERMISSION_DENIED) {
-            // // TODO: 2018/9/21
-            ActivityCompat.requestPermissions(reactContext.getCurrentActivity(),
-                    new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
-                    1);
-        }
-
-
-        pairedDeivce = new JSONArray();
-        foundDevice = new JSONArray();
-        Set<BluetoothDevice> boundDevices = mBluetoothAdapter.getBondedDevices();
-        for (BluetoothDevice d : boundDevices) {
-            try {
-                JSONObject obj = new JSONObject();
-                obj.put("name", d.getName());
-                obj.put("address", d.getAddress());
-                pairedDeivce.put(obj);
-            } catch (Exception e) {
-                //ignore.
-            }
-        }
-
-        WritableMap params = Arguments.createMap();
-        params.putString("devices", pairedDeivce.toString());
-        emitRNEvent(EVENT_DEVICE_ALREADY_PAIRED, params);
-        if (!mBluetoothAdapter.startDiscovery()) {
-            promise.reject("DISCOVER", "NOT_STARTED");
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
+        if(adapter == null){
+            promise.reject(EVENT_BLUETOOTH_NOT_SUPPORT);
+        }else {
             cancelDisCovery();
-        } else {
-            promiseMap.put(PROMISE_SCAN, promise);
+            int permissionChecked = ContextCompat.checkSelfPermission(reactContext, android.Manifest.permission.ACCESS_COARSE_LOCATION);
+            if (permissionChecked == PackageManager.PERMISSION_DENIED) {
+                // // TODO: 2018/9/21
+                ActivityCompat.requestPermissions(reactContext.getCurrentActivity(),
+                        new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                        1);
+            }
+
+
+            pairedDeivce = new JSONArray();
+            foundDevice = new JSONArray();
+            Set<BluetoothDevice> boundDevices = adapter.getBondedDevices();
+            for (BluetoothDevice d : boundDevices) {
+                try {
+                    JSONObject obj = new JSONObject();
+                    obj.put("name", d.getName());
+                    obj.put("address", d.getAddress());
+                    pairedDeivce.put(obj);
+                } catch (Exception e) {
+                    //ignore.
+                }
+            }
+
+            WritableMap params = Arguments.createMap();
+            params.putString("devices", pairedDeivce.toString());
+            emitRNEvent(EVENT_DEVICE_ALREADY_PAIRED, params);
+            if (!adapter.startDiscovery()) {
+                promise.reject("DISCOVER", "NOT_STARTED");
+                cancelDisCovery();
+            } else {
+                promiseMap.put(PROMISE_SCAN, promise);
+            }
         }
     }
 
     @ReactMethod
     public void connect(String address, final Promise promise) {
-        if (mBluetoothAdapter.isEnabled()) {
-            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
+        if (adapter!=null && adapter.isEnabled()) {
+            BluetoothDevice device = adapter.getRemoteDevice(address);
             promiseMap.put(PROMISE_CONNECT, promise);
             mService.connect(device);
         } else {
@@ -203,9 +224,10 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
     }
 
     @ReactMethod
-    public void unpaire(String address, final Promise promise) {
-        if (mBluetoothAdapter.isEnabled()) {
-            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+    public void unpaire(String address,final Promise promise){
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
+        if (adapter!=null && adapter.isEnabled()) {
+            BluetoothDevice device = adapter.getRemoteDevice(address);
             this.unpairDevice(device);
             promise.resolve(address);
         } else {
@@ -274,8 +296,9 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
 
     private void cancelDisCovery() {
         try {
-            if (mBluetoothAdapter.isDiscovering()) {
-                mBluetoothAdapter.cancelDiscovery();
+            BluetoothAdapter adapter = this.getBluetoothAdapter();
+            if (adapter!=null && adapter.isDiscovering()) {
+                adapter.cancelDiscovery();
             }
             Log.d(TAG, "Discover canceled");
         } catch (Exception e) {
@@ -286,6 +309,7 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
 
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
         Log.d(TAG, "onActivityResult " + resultCode);
         switch (requestCode) {
             case REQUEST_CONNECT_DEVICE: {
@@ -295,8 +319,8 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
                     String address = data.getExtras().getString(
                             EXTRA_DEVICE_ADDRESS);
                     // Get the BLuetoothDevice object
-                    if (BluetoothAdapter.checkBluetoothAddress(address)) {
-                        BluetoothDevice device = mBluetoothAdapter
+                    if (adapter!=null && BluetoothAdapter.checkBluetoothAddress(address)) {
+                        BluetoothDevice device = adapter
                                 .getRemoteDevice(address);
                         // Attempt to connect to the device
                         mService.connect(device);
@@ -309,9 +333,9 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
                 // When the request to enable Bluetooth returns
                 if (resultCode == Activity.RESULT_OK && promise != null) {
                     // Bluetooth is now enabled, so set up a session
-                    if (mBluetoothAdapter != null) {
-                        WritableArray pairedDeivce = Arguments.createArray();
-                        Set<BluetoothDevice> boundDevices = mBluetoothAdapter.getBondedDevices();
+                    if(adapter!=null){
+                        WritableArray pairedDeivce =Arguments.createArray();
+                        Set<BluetoothDevice> boundDevices = adapter.getBondedDevices();
                         for (BluetoothDevice d : boundDevices) {
                             try {
                                 JSONObject obj = new JSONObject();
