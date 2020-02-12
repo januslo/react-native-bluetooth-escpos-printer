@@ -40,10 +40,10 @@ Refers to your JS files
 ## Usage and APIs ##
 
 ### BluetoothManager ###
-BluetoothManager is the module that for Bluetooth service management, supports Bluetooth status check, enable/disable Bluetooth service,scan devices,connect/unpaire devices.
+BluetoothManager is the module for Bluetooth service management, supports Bluetooth status check, enable/disable Bluetooth service, scan devices, connect/unpair devices.
 
 * isBluetoothEnabled ==>
-async function, check whether Bluetooth service is enabled.
+async function, checks whether Bluetooth service is enabled.
 //TODO: consider to return the the devices information already bound and paired here..
 
 ```javascript
@@ -55,7 +55,7 @@ async function, check whether Bluetooth service is enabled.
 ```
 
 * enableBluetooth ==> ``` diff + ANDROID ONLY ```
-async function, enable the bluetooth service, returns the devices information already bound and paired.  ``` diff - IOS would just resovle with nil ```
+async function, enables the bluetooth service, returns the devices information already bound and paired.  ``` diff - IOS would just resovle with nil ```
 
 ```javascript
 BluetoothManager.enableBluetooth().then((r)=>{
@@ -76,7 +76,7 @@ BluetoothManager.enableBluetooth().then((r)=>{
 ```
 
 * disableBluetooth ==>  ``` diff + ANDROID ONLY ```
-async function ,disable the bluetooth service. ``` diff - IOS would just resovle with nil ```
+async function ,disables the bluetooth service. ``` diff - IOS would just resovle with nil ```
 
 ```javascript
 BluetoothManager.disableBluetooth().then(()=>{
@@ -85,7 +85,7 @@ BluetoothManager.disableBluetooth().then(()=>{
 ```
 
 * scanDevices ==>
-async function , scans the bluetooth devices, returns devices found and pared after scan finish. Event [BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED] would be emitted with devices bound; event [BluetoothManager.EVENT_DEVICE_FOUND] would be emitted (many time) as long as new devices found.
+async function , scans the bluetooth devices, returns devices found and paired after scan finish. Event [BluetoothManager.EVENT_DEVICE_ALREADY_PAIRED] would be emitted with devices bound; event [BluetoothManager.EVENT_DEVICE_FOUND] would be emitted (many time) as long as new devices found.
 
 samples with events:
 ```javascript
@@ -121,7 +121,7 @@ BluetoothManager.scanDevices()
 ```
 
 * connect ==>
-async function, connect the specified devices, if not bound, bound dailog promps.
+async function, connects the specified device, if not bound, bound dailog prompts.
 
 ```javascript
 
@@ -140,8 +140,8 @@ async function, connect the specified devices, if not bound, bound dailog promps
 
 ```
 
-* unpaire ==>
-async function, disconnect and unpaire the specified devices
+* unpair ==>
+async function, disconnects and unpairs the specified devices
 
 ```javascript
      BluetoothManager.connect(rowData.address)
@@ -169,7 +169,7 @@ async function, disconnect and unpaire the specified devices
 The printer for label printing.
 
 * printLabel ==>
-async function the perform label print action.
+async function that performs the label print action.
 
 ```javascript
 BluetoothTscPrinter.printLabel(options)
@@ -185,13 +185,13 @@ BluetoothTscPrinter.printLabel(options)
 #### Options of printLabel( ) function: (JSON object) ####
 
 ##### width #####
-    label with , the real size of the label, matured by mm usualy.
+    label width , the real size of the label, measured by mm usually.
 ##### height #####
-    label height, the real size of the label, matured by mm usualy.
+    label height, the real size of the label, measured by mm usually.
 ##### direction #####
     the printing direction, constants of BluetoothTscPrinter.DIRECTION, values BluetoothTscPrinter.DIRECTION.FORWARD/BluetoothTscPrinter.DIRECTION.BACKWARD (0/1)
 ##### gap #####
-    the gap between 2 labels, matured by mm usualy.
+    the gap between 2 labels, measured by mm usually.
 ##### reference #####
     the "zero" position of the label, values [x,y], default [0,0]
 ##### tear #####
@@ -263,13 +263,13 @@ BluetoothTscPrinter.printLabel(options)
             |LEVEL_Q| "Q"|
             |LEVEL_H| "H"|
         * width
-            the qrcode size (width X width),since the qrcode are squre normally, so we just config the width.
+            the qrcode size (width X width),since the qrcode are square normally, so we just config the width.
 
         * rotation
-            rationtion. the same as text object.
+            rotation. the same as text object.
 
 ##### barcode #####
-    the collection of barcode to print, contains foloowing fields as configuration
+    the collection of barcode to print, contains following fields as configuration
       * x
         the print start position of x,
       * y
@@ -311,7 +311,7 @@ BluetoothTscPrinter.printLabel(options)
      * height
       the height of the barcode.
      * readable
-      the hunman readable factor, 0-not readable, 1-readable.
+      the human readable factor, 0-not readable, 1-readable.
      * rotation
       rotation, the same as text.
      * code
@@ -319,7 +319,7 @@ BluetoothTscPrinter.printLabel(options)
      * wide
      the wide bar lines width (dot)
      * narrow
-     the narrow bar line widht (dot)
+     the narrow bar line width (dot)
 
 ##### image #####
     the collection of the image to print.
@@ -382,11 +382,11 @@ let options = {
   set the spaces between lines.
 
 #### printerUnderLine(int line) ####
-  set the under line of the text, @param line --  0-off,1-on,2-deeper
+  set the underline of the text, @param line --  0-off,1-on,2-deeper
 
 #### printerAlign(int align) ####
   set the printer alignment, constansts: BluetoothEscposPrinter.ALIGN.LEFT/BluetoothEscposPrinter.ALIGN.CENTER/BluetoothEscposPrinter.ALIGN.RIGHT.
-  Not works ant printPic() method.
+  Does not work on printPic() method.
 
 #### printText(String text, ReadableMap options) ####
   print text, options as following:
@@ -404,20 +404,20 @@ let options = {
   * options => text print config options, the same of printText() options.
 
 #### setWidth(int width) ####
-  sets the widht of the printer.
+  sets the width of the printer.
 
 #### printPic(String base64encodeStr,ReadableMap options) ####
-  prints the image which encoded by base64, without schema.
-  * options: contains the params that may use in printing pic: "with":the pic with,basic on devices width(dots,58mm-384); "left":the left padding of the pic,for the printing position adjustment.
+  prints the image which is encoded by base64, without schema.
+  * options: contains the params that may use in printing pic: "width": the pic width, basic on devices width(dots,58mm-384); "left": the left padding of the pic for the printing position adjustment.
 
 #### setfTest() ####
-  prints the selft test.
+  prints the self test.
 
 #### rotate() ####
-  set the rotate of the line.
+  sets the rotation of the line.
 
 #### setBlob(int weight) ####
-  set blob of the line.
+  sets blob of the line.
 
 #### printQRCode(String content, int size, int correctionLevel) ####
   prints the qrcode.
