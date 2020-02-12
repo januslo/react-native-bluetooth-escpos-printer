@@ -483,3 +483,8 @@ await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.CENTER);
 await  BluetoothEscposPrinter.printText("欢迎下次光临\n\r\n\r\n\r",{});
 await BluetoothEscposPrinter.printerAlign(BluetoothEscposPrinter.ALIGN.LEFT);
 ```
+
+### Demo for opening the drawer ###
+```javascript
+BluetoothEscposPrinter.opendDrawer(0, 250, 250);
+```

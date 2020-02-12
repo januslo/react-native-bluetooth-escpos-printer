@@ -341,7 +341,7 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
              * Returns: byte[]
              */
             byte[] data = PrintPicture.POS_PrintBMP(mBitmap, width, nMode, leftPadding);
-            //	SendDataByte(buffer);
+            //  SendDataByte(buffer);
             sendDataByte(Command.ESC_Init);
             sendDataByte(Command.LF);
             sendDataByte(data);
@@ -433,6 +433,29 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
         byte[] command = PrinterCommand.getBarCodeCommand(str, nType, nWidthX, nHeight, nHriFontType, nHriFontPosition);
         sendDataByte(command);
     }
+
+    @ReactMethod
+    public void openDrawer(int nMode, int nTime1, int nTime2) {
+        try{
+            byte[] command = PrinterCommand.POS_Set_Cashbox(nMode, nTime1, nTime2);
+            sendDataByte(command);
+
+         }catch (Exception e){
+            Log.d(TAG, e.getMessage());
+        }
+    }
+
+
+    @ReactMethod
+    public void cutOnePoint() {
+        try{
+            byte[] command = PrinterCommand.POS_Cut_One_Point();
+            sendDataByte(command);
+
+         }catch (Exception e){
+            Log.d(TAG, e.getMessage());
+        }
+    }    
 
     private boolean sendDataByte(byte[] data) {
         if (data==null || mService.getState() != BluetoothService.STATE_CONNECTED) {
