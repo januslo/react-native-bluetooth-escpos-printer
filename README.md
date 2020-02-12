@@ -28,8 +28,27 @@ Link the plugin to your RN project
 react-native link react-native-bluetooth-escpos-printer
 ```
 
-Or you may need to link manually.
-//TODO: manually link guilds.
+### Manual linking (Android) ###
+Ensure your build files match the following requirements:
+
+1. (React Native 0.59 and lower) Define the *`react-native-bluetooth-escpos-printer`* project in *`android/settings.gradle`*:
+
+```
+include ':react-native-bluetooth-escpos-printer'
+project(':react-native-bluetooth-escpos-printer').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-bluetooth-escpos-printer/android')
+```
+2. (React Native 0.59 and lower) Add the *`react-native-bluetooth-escpos-printer`* as an dependency of your app in *`android/app/build.gradle`*:
+```
+...
+dependencies {
+  ...
+  implementation project(':react-native-bluetooth-escpos-printer')
+}
+```
+
+3. (React Native 0.59 and lower) Add *`import cn.jystudio.bluetooth.RNBluetoothEscposPrinterPackage;`* and *`new RNBluetoothEscposPrinterPackage()`* in your *`MainApplication.java`* :
+
+
 
 ### Step3 ###
 Refers to your JS files
