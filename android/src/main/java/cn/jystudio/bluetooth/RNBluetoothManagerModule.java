@@ -10,22 +10,24 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
+
 import com.facebook.react.bridge.*;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.annotation.Nullable;
+
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
 /**
  * Created by januslo on 2018/9/22.
  */
@@ -141,7 +143,8 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
                 } catch (Exception e) {
                     //ignore.
                 }
-            }Log.d(TAG,"ble Enabled");
+            }
+            Log.d(TAG, "ble Enabled");
             promise.resolve(pairedDeivce);
         }
     }
@@ -221,7 +224,7 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
     }
 
     @ReactMethod
-    public void unpaire(String address,final Promise promise){
+    public void unpair(String address,final Promise promise){
         BluetoothAdapter adapter = this.getBluetoothAdapter();
         if (adapter!=null && adapter.isEnabled()) {
             BluetoothDevice device = adapter.getRemoteDevice(address);
@@ -233,8 +236,73 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
 
     }
 
+    @ReactMethod
+    public void disconnect(String address,final Promise promise){
+        BluetoothAdapter adapter = this.getBluetoothAdapter();
+        if (adapter!=null && adapter.isEnabled()) {
+            BluetoothDevice device = adapter.getRemoteDevice(address);
+            try {
+                mService.stop();
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+            }
+            promise.resolve(address);
+        } else {
+            promise.reject("BT NOT ENABLED");
+        }
+
+    }
+
+    /*
+    // Constants that indicate the current connection state
+    public static final int STATE_NONE = 0;       // we're doing nothing
+    // public static final int STATE_LISTEN = 1;     // now listening for incoming connections //feathure removed.
+    public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
+    public static final int STATE_CONNECTED = 3;  // now connected to a remote device
+*/
+    @ReactMethod
+    public void isDeviceConnected(final Promise promise) {
+
+        Boolean isConnected = true;
+
+        if (mService != null) {
+            switch (mService.getState()) {
+                case 0:
+                    isConnected = false;
+                    break;
+
+                case 2:
+                    isConnected = false;
+                    break;
+
+                case 3:
+                    isConnected = true;
+                    break;
+
+                default:
+                    isConnected = false;
+                    break;
+            }
+            promise.resolve(isConnected);
+        }
+    }
+
+
+
+    /* Return the address of the currently connected device */
+    @ReactMethod
+    public void getConnectedDeviceAddress(final Promise promise) {
+        if (mService!=null){
+            promise.resolve(mService.getLastConnectedDeviceAddress());
+        }
+
+    }
+
+
+
     private void unpairDevice(BluetoothDevice device) {
         try {
+            
             Method m = device.getClass()
                     .getMethod("removeBond", (Class[]) null);
             m.invoke(device, (Object[]) null);
@@ -296,7 +364,7 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
                             }
                         }
                         promise.resolve(pairedDeivce);
-                    }else{
+                    } else {
                         promise.resolve(null);
                     }
 
@@ -398,18 +466,20 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
 
     @Override
     public void onBluetoothServiceStateChanged(int state, Map<String, Object> bundle) {
-        Log.d(TAG,"on bluetoothServiceStatChange:"+state);
+        Log.d(TAG, "on bluetoothServiceStatChange:" + state);
         switch (state) {
             case BluetoothService.STATE_CONNECTED:
             case MESSAGE_DEVICE_NAME: {
                 // save the connected device's name
                 mConnectedDeviceName = (String) bundle.get(DEVICE_NAME);
                 Promise p = promiseMap.remove(PROMISE_CONNECT);
-                if (p == null) {   Log.d(TAG,"No Promise found.");
+                if (p == null) {
+                    Log.d(TAG, "No Promise found.");
                     WritableMap params = Arguments.createMap();
                     params.putString(DEVICE_NAME, mConnectedDeviceName);
                     emitRNEvent(EVENT_CONNECTED, params);
-                } else { Log.d(TAG,"Promise Resolve.");
+                } else {
+                    Log.d(TAG, "Promise Resolve.");
                     p.resolve(mConnectedDeviceName);
                 }
 
@@ -417,11 +487,11 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
             }
             case MESSAGE_CONNECTION_LOST: {
                 //Connection lost should not be the connect result.
-               // Promise p = promiseMap.remove(PROMISE_CONNECT);
-               // if (p == null) {
-                    emitRNEvent(EVENT_CONNECTION_LOST, null);
-               // } else {
-                 //   p.reject("Device connection was lost");
+                // Promise p = promiseMap.remove(PROMISE_CONNECT);
+                // if (p == null) {
+                emitRNEvent(EVENT_CONNECTION_LOST, null);
+                // } else {
+                //   p.reject("Device connection was lost");
                 //}
                 break;
             }
