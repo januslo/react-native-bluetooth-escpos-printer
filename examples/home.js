@@ -149,7 +149,7 @@ export default class Home extends Component {
             let row = rows[i];
             if(row.address) {
                 items.push(
-                    <TouchableOpacity key={new Date().getTime()+i} stlye={styles.wtf} onPress={()=>{
+                    <TouchableOpacity key={new Date().getTime()+i} style={styles.wtf} onPress={()=>{
                     this.setState({
                         loading:true
                     });
