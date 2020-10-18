@@ -175,11 +175,11 @@ public class RNBluetoothManagerModule extends ReactContextBaseJavaModule
             promise.reject(EVENT_BLUETOOTH_NOT_SUPPORT);
         }else {
             cancelDisCovery();
-            int permissionChecked = ContextCompat.checkSelfPermission(reactContext, android.Manifest.permission.ACCESS_COARSE_LOCATION);
+            int permissionChecked = ContextCompat.checkSelfPermission(reactContext, android.Manifest.permission.ACCESS_FINE_LOCATION);
             if (permissionChecked == PackageManager.PERMISSION_DENIED) {
                 // // TODO: 2018/9/21
                 ActivityCompat.requestPermissions(reactContext.getCurrentActivity(),
-                        new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                         1);
             }
 
