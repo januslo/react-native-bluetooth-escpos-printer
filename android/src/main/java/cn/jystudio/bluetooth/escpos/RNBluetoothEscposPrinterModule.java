@@ -594,7 +594,7 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
 
                 ReadableMap qrData = data.getMap(i);
 
-                String url = qrData.getString("caption");
+                String url = qrData.getString("url");
                 String caption = qrData.getString("caption");
 
                 BitMatrix bitMatrix = new QRCodeWriter().encode(url,
