@@ -310,6 +310,155 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
         promise.resolve(null);
     }
 
+    public void printColumnAndroid(int[] columnWidths, int[] columnAligns, String[] columnTexts,
+                            @Nullable ReadableMap options,final Promise promise){
+        if(columnWidths.length !=columnTexts.length  || columnWidths.length != columnAligns.length) {
+            promise.reject("COLUMN_WIDTHS_ALIGNS_AND_TEXTS_NOT_MATCH");
+            return;
+        }
+            int totalLen = 0;
+            for(int i=0;i<columnWidths.length;i++){
+                totalLen+=columnWidths[i];
+            }
+            int maxLen = deviceWidth/8;
+            if(totalLen>maxLen){
+                promise.reject("COLUNM_WIDTHS_TOO_LARGE");
+                return;
+            }
+
+        String encoding = "GBK";
+        int codepage = 0;
+        int widthTimes = 0;
+        int heigthTimes = 0;
+        int fonttype = 0;
+        if (options != null) {
+            encoding = options.hasKey("encoding") ? options.getString("encoding") : "GBK";
+            codepage = options.hasKey("codepage") ? options.getInt("codepage") : 0;
+            widthTimes = options.hasKey("widthtimes") ? options.getInt("widthtimes") : 0;
+            heigthTimes = options.hasKey("heigthtimes") ? options.getInt("heigthtimes") : 0;
+            fonttype = options.hasKey("fonttype") ? options.getInt("fonttype") : 0;
+        }
+        Log.d(TAG,"encoding: "+encoding);
+
+        /**
+         * [column1-1,
+         * column1-2,
+         * column1-3 ... column1-n]
+         * ,
+         *  [column2-1,
+         * column2-2,
+         * column2-3 ... column2-n]
+         *
+         * ...
+         *
+         */
+        List<List<String>> table = new ArrayList<List<String>>();
+
+        /**splits the column text to few rows and applies the alignment **/
+        int padding = 1;
+        for(int i=0;i<columnWidths.length;i++){
+            int width =columnWidths[i]-padding;//1 char padding
+            String text = String.copyValueOf(columnTexts[i].toCharArray());
+            List<ColumnSplitedString> splited = new ArrayList<ColumnSplitedString>();
+            int shorter = 0;
+            int counter = 0;
+            String temp = "";
+            for(int c=0;c<text.length();c++){
+                char ch = text.charAt(c);
+                int l = isChinese(ch)?2:1;
+                if (l==2){
+                    shorter++;
+                }
+                temp=temp+ch;
+
+                if(counter+l<width){
+                   counter = counter+l;
+                }else{
+                    splited.add(new ColumnSplitedString(shorter,temp));
+                    temp = "";
+                    counter=0;
+                    shorter=0;
+                }
+            }
+            if(temp.length()>0) {
+                splited.add(new ColumnSplitedString(shorter,temp));
+            }
+            int align = columnAligns[i];
+
+            List<String> formated = new ArrayList<String>();
+            for(ColumnSplitedString s: splited){
+                StringBuilder empty = new StringBuilder();
+                for(int w=0;w<(width+padding-s.getShorter());w++){
+                    empty.append(" ");
+                }
+                int startIdx = 0;
+                String ss = s.getStr();
+                if(align == 1 && ss.length()<(width-s.getShorter())){
+                    startIdx = (width-s.getShorter()-ss.length())/2;
+                    if(startIdx+ss.length()>width-s.getShorter()){
+                        startIdx--;
+                    }
+                    if(startIdx<0){
+                        startIdx=0;
+                    }
+                }else if(align==2 && ss.length()<(width-s.getShorter())){
+                    startIdx =width - s.getShorter()-ss.length();
+                }
+                Log.d(TAG,"empty.replace("+startIdx+","+(startIdx+ss.length())+","+ss+")");
+                empty.replace(startIdx,startIdx+ss.length(),ss);
+                formated.add(empty.toString());
+            }
+            table.add(formated);
+
+        }
+
+        /**  try to find the max row count of the table **/
+        int maxRowCount = 0;
+        for(int i=0;i<table.size()/*column count*/;i++){
+            List<String> rows = table.get(i); // row data in current column
+            if(rows.size()>maxRowCount){maxRowCount = rows.size();}// try to find the max row count;
+        }
+
+        /** loop table again to fill the rows **/
+        StringBuilder[] rowsToPrint = new StringBuilder[maxRowCount];
+        for(int column=0;column<table.size()/*column count*/;column++){
+            List<String> rows = table.get(column); // row data in current column
+            for(int row=0;row<maxRowCount;row++){
+                if(rowsToPrint[row]==null){
+                    rowsToPrint[row] = new StringBuilder();
+                }
+                if(row<rows.size()){
+                    //got the row of this column
+                    rowsToPrint[row].append(rows.get(row));
+                }else{
+                    int w =columnWidths[column];
+                    StringBuilder empty = new StringBuilder();
+                   for(int i=0;i<w;i++){
+                       empty.append(" ");
+                   }
+                    rowsToPrint[row].append(empty.toString());//Append spaces to ensure the format
+                }
+            }
+        }
+
+        /** loops the rows and print **/
+        for(int i=0;i<rowsToPrint.length;i++){
+            rowsToPrint[i].append("\n\r");//wrap line..
+            try {
+//                byte[] toPrint = rowsToPrint[i].toString().getBytes("UTF-8");
+//                String text = new String(toPrint, Charset.forName(encoding));
+                if (!sendDataByte(PrinterCommand.POS_Print_Text(rowsToPrint[i].toString(), encoding, codepage, widthTimes, heigthTimes, fonttype))) {
+                    promise.reject("COMMAND_NOT_SEND");
+                    return;
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        promise.resolve(null);
+    }
+
+
     @ReactMethod
     public void setWidth(int width) {
         deviceWidth = width;
@@ -392,7 +541,7 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
             hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.forBits(correctionLevel));
             BitMatrix bitMatrix = new QRCodeWriter().encode(content,
                     BarcodeFormat.QR_CODE, size, size, hints);
-
+            
             int width = bitMatrix.getWidth();
             int height = bitMatrix.getHeight();
 
@@ -422,6 +571,99 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
             } else {
                 promise.reject("COMMAND_NOT_SEND");
             }
+        } catch (Exception e) {
+            promise.reject(e.getMessage(), e);
+        }
+    }
+    @ReactMethod
+    public void printHorizontalQRCode(ReadableArray data, int gap, int size, int leftPadding, int topGap, int correctionLevel, final Promise promise) {
+        try {
+            // Log.i(TAG, "生成的文本：" + content);
+            // 把输入的文本转为二维码
+            Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
+            hints.put(EncodeHintType.CHARACTER_SET, "utf-8");
+            hints.put(EncodeHintType.MARGIN, 1);
+            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.forBits(correctionLevel));
+
+            for(int i=0;i<data.size();i++){
+
+                if ((i > 0) && (i%5 == 0)){
+                    // Print a new line to keep in sync
+                    printText("\n", null, promise); 
+                }
+
+                ReadableMap qrData = data.getMap(i);
+
+                String url = qrData.getString("caption");
+                String caption = qrData.getString("caption");
+
+                BitMatrix bitMatrix = new QRCodeWriter().encode(url,
+                    BarcodeFormat.QR_CODE, size, size, hints);
+
+                int bitmatrixWidth = bitMatrix.getWidth();
+                int width = bitMatrix.getWidth() + bitmatrixWidth + gap;
+                int height = bitMatrix.getHeight();
+
+                int[] pixels = new int[width * height];
+                Bitmap bitmap = Bitmap.createBitmap(width, height,
+                    Bitmap.Config.ARGB_8888);
+
+
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < bitmatrixWidth; x++) {
+                        if (y <= topGap){
+                            pixels[y * width + x] = 0xffffffff;
+                        }
+                        else {
+                            if (bitMatrix.get(x, y)) {
+                                pixels[y * width + x] = 0xff000000;
+                            } else {
+                                pixels[y * width + x] = 0xffffffff;
+                            }
+                        }
+                        
+                    }
+                }
+
+                int x_cord;
+
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < bitmatrixWidth; x++) {
+                        x_cord = x + bitmatrixWidth + gap;
+
+                        if (y <= topGap){
+                            pixels[y * width + x_cord] = 0xffffffff;
+                        } else {                            
+                            if (bitMatrix.get(x, y)) {
+                                pixels[y * width + x_cord] = 0xff000000;
+                            } else {
+                                pixels[y * width + x_cord] = 0xffffffff;
+                            }
+                        }
+
+                        
+                    }
+                }
+            
+                bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+
+                //TODO: may need a left padding to align center.
+                byte[] bmpData = PrintPicture.POS_PrintBMP(bitmap, width, 0, leftPadding);
+                int[] align = {1, 0, 1, 0};
+                int[] colWidths = {2, 12, 5, 12};
+                String[] colData = {"", caption, "", caption};
+                if (sendDataByte(bmpData)) {
+                    promise.resolve(null);
+                    printColumnAndroid(colWidths, align, colData, null, promise);  // Print the caption below QR code
+
+                    // Add empty lines after the QR code data
+                    printText("\n", null, promise);
+                    printText("\n", null, promise); 
+                } else {
+                    promise.reject("COMMAND_NOT_SEND");
+                }
+            }
+
         } catch (Exception e) {
             promise.reject(e.getMessage(), e);
         }
