@@ -6,6 +6,14 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+    "index.js",
+    "android",
+    "ios",
+    "RNBluetoothEscposPrinter.podspec",
+    "!android/build",
+    "!ios/build"
+  ],
   "keywords": [
     "react-native",
     "ESC",
