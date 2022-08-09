@@ -1,7 +1,11 @@
 buildscript {
     repositories {
-        jcenter { url "http://jcenter.bintray.com/" }
-        maven {url "http://repo.spring.io/plugins-release/"}
+        jcenter { url "http://jcenter.bintray.com/" 
+                  allowInsecureProtocol = true
+                }
+        maven { url "http://repo.spring.io/plugins-release/"
+                allowInsecureProtocol = true
+              }
         mavenCentral()
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -9,6 +13,7 @@ buildscript {
         }
         maven {
             url 'https://maven.google.com'
+            allowInsecureProtocol = true
         }
     }
 
@@ -40,8 +45,12 @@ android {
 }
 
 repositories {
-    jcenter { url "http://jcenter.bintray.com/" }
-    maven {url "http://repo.spring.io/plugins-release/"}
+    jcenter { url "http://jcenter.bintray.com/" 
+              allowInsecureProtocol = true
+            }
+    maven { url "http://repo.spring.io/plugins-release/"
+            allowInsecureProtocol = true
+          }
     mavenCentral()
     maven {
         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -49,6 +58,7 @@ repositories {
     }
     maven {
         url 'https://maven.google.com'
+        allowInsecureProtocol = true
     }
 }
 
