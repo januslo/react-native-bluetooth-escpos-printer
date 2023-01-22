@@ -209,7 +209,8 @@ public class BluetoothService {
             Map<String, Object> bundle = new HashMap<String, Object>();
 
             // Always cancel discovery because it will slow down a connection
-            mAdapter.cancelDiscovery();
+            // Fix bug on android 12+
+            // mAdapter.cancelDiscovery();
 
             BluetoothSocket tmp = null;
 
