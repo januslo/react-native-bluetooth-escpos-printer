@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        jcenter { url "http://jcenter.bintray.com/" }
+        //jcenter { url "http://jcenter.bintray.com/" }
         maven {url "http://repo.spring.io/plugins-release/"}
         mavenCentral()
         maven {
@@ -40,7 +40,7 @@ android {
 }
 
 repositories {
-    jcenter { url "http://jcenter.bintray.com/" }
+    //jcenter { url "http://jcenter.bintray.com/" }
     maven {url "http://repo.spring.io/plugins-release/"}
     mavenCentral()
     maven {
