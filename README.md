@@ -16,7 +16,7 @@ TypeError: Cannot set property 'DIRECTION' of null, js engine: hermes
 ### Step 1 ###
 Install via YARN [Check In YARN](https://www.npmjs.com/package/react-native-bluetooth-escpos-printer)
 ```bash
-yarn add react-native-bluetooth-escpos-printer
+yarn add https://github.com/jmanuelhk/react-native-bluetooth-escpos-printer.git
 ```
 
 ### Step2 ###
