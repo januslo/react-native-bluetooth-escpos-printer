@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "RNBluetoothManager.h"
 #import <CoreBluetooth/CoreBluetooth.h>
+#import "ZXingObjC.h"
 @implementation RNBluetoothManager
 
 NSString *EVENT_DEVICE_ALREADY_PAIRED = @"EVENT_DEVICE_ALREADY_PAIRED";
