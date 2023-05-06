@@ -214,7 +214,24 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
         //centralManager:didDiscoverPeripheral:advertisementData:RSSI:
     }
 }
-//unpaire(address)
+//disconnect(address)
+RCT_EXPORT_METHOD(disconnect:(NSString *)address
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSLog(@"Trying to disconnect device with address: %@", address);
+    
+    CBPeripheral *peripheral = [self.foundDevices objectForKey:address];
+    
+    if (peripheral) {
+        [self.centralManager cancelPeripheralConnection:peripheral];
+        [self.foundDevices removeObjectForKey:address];
+        resolve(nil);
+        NSLog(@"Bluetooth device with address %@ disconnected successfully.", address);
+    } else {
+        reject(@"DISCONNECT_ERROR", @"Device not found.", nil);
+    }
+}
 
 
 -(void)callStop{
