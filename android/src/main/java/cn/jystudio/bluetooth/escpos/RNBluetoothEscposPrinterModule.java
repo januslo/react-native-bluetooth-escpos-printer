@@ -5,6 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.util.Log;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+
 import cn.jystudio.bluetooth.BluetoothService;
 import cn.jystudio.bluetooth.BluetoothServiceStateObserver;
 import cn.jystudio.bluetooth.escpos.command.sdk.Command;
@@ -340,14 +344,33 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
              * nMode    打印模式
              * Returns: byte[]
              */
-            byte[] data = PrintPicture.POS_PrintBMP(mBitmap, width, nMode, leftPadding);
+
+            int newWidth = width + leftPadding;
+            int height = mBitmap.getHeight();
+
+            // Buat bitmap baru dengan lebar yang diperbesar dan tinggi yang sama dengan gambar asli
+            Bitmap adjustedBitmap = Bitmap.createBitmap(newWidth, height, Bitmap.Config.ARGB_8888);
+
+            // Buat kanvas baru untuk menggambar gambar pada bitmap baru
+            Canvas canvas = new Canvas(adjustedBitmap);
+
+            // Isi kanvas dengan warna putih (opsional)
+            canvas.drawColor(Color.WHITE);
+
+            // Gambar gambar asli pada kanvas dengan left padding
+            canvas.drawBitmap(mBitmap, leftPadding, 0, null);
+
+            // Cetak gambar BMP dengan lebar yang diperbesar dan left padding
+            byte[] data = PrintPicture.POS_PrintBMP(adjustedBitmap, newWidth, nMode, 0);
+
+            // byte[] data = PrintPicture.POS_PrintBMP(mBitmap, width, nMode, leftPadding);
             //  SendDataByte(buffer);
             sendDataByte(Command.ESC_Init);
             sendDataByte(Command.LF);
             sendDataByte(data);
             // sendDataByte(PrinterCommand.POS_Set_PrtAndFeedPaper(30));
             // sendDataByte(PrinterCommand.POS_Set_Cut(1));
-            // sendDataByte(PrinterCommand.POS_Set_PrtInit());
+            sendDataByte(PrinterCommand.POS_Set_PrtInit());
         }
     }
 
