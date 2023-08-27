@@ -5,6 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.util.Log;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+
 import cn.jystudio.bluetooth.BluetoothService;
 import cn.jystudio.bluetooth.BluetoothServiceStateObserver;
 import cn.jystudio.bluetooth.escpos.command.sdk.Command;
@@ -315,41 +319,75 @@ public class RNBluetoothEscposPrinterModule extends ReactContextBaseJavaModule
         deviceWidth = width;
     }
 
+    
+
+    private static final int ALIGN_LEFT = 0;
+    private static final int ALIGN_CENTER = 1;
+    private static final int ALIGN_RIGHT = 2;
+
     @ReactMethod
-    public void printPic(String base64encodeStr, @Nullable  ReadableMap options) {
+    public void printPic(String base64encodeStr, @Nullable ReadableMap options) {
         int width = 0;
+        int alignment = ALIGN_LEFT; 
+        int maxPrintWidth = deviceWidth; 
         int leftPadding = 0;
-        if(options!=null){
+
+        if (options != null) {
             width = options.hasKey("width") ? options.getInt("width") : 0;
-            leftPadding = options.hasKey("left")?options.getInt("left") : 0;
+            alignment = options.hasKey("alignment") ? options.getInt("alignment") : ALIGN_LEFT;
+            leftPadding = options.hasKey("left") ? options.getInt("left") : 0;
         }
 
-        //cannot larger then devicesWith;
-        if(width > deviceWidth || width == 0){
-            width = deviceWidth;
+        if (width == 0) {
+            width = maxPrintWidth; // Use max width if width is not specified
         }
 
         byte[] bytes = Base64.decode(base64encodeStr, Base64.DEFAULT);
         Bitmap mBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         int nMode = 0;
+
         if (mBitmap != null) {
-            /**
-             * Parameters:
-             * mBitmap  要打印的图片
-             * nWidth   打印宽度（58和80）
-             * nMode    打印模式
-             * Returns: byte[]
-             */
-            byte[] data = PrintPicture.POS_PrintBMP(mBitmap, width, nMode, leftPadding);
-            //  SendDataByte(buffer);
+            int newWidth = Math.min(width + leftPadding, maxPrintWidth);
+            int height = mBitmap.getHeight();
+
+            // Create a bitmap with the specified width and height
+            Bitmap adjustedBitmap = Bitmap.createBitmap(newWidth, height, Bitmap.Config.ARGB_8888);
+
+            // Create a canvas to draw the adjusted bitmap
+            Canvas canvas = new Canvas(adjustedBitmap);
+
+            // Fill the canvas with white color (optional)
+            canvas.drawColor(Color.WHITE);
+
+            // Calculate the left position based on alignment
+            int leftPosition;
+            switch (alignment) {
+                case ALIGN_CENTER:
+                    leftPosition = (newWidth - mBitmap.getWidth()) / 2;
+                    break;
+                case ALIGN_RIGHT:
+                    leftPosition = newWidth - mBitmap.getWidth() - leftPadding;
+                    break;
+                case ALIGN_LEFT:
+                default:
+                    leftPosition = leftPadding;
+                    break;
+            }
+
+            // Draw the bitmap on the canvas
+            canvas.drawBitmap(mBitmap, leftPosition, 0, null);
+
+            // Print the BMP image
+            byte[] data = PrintPicture.POS_PrintBMP(adjustedBitmap, newWidth, nMode, 0);
+
+            // Send the data to the printer
             sendDataByte(Command.ESC_Init);
             sendDataByte(Command.LF);
             sendDataByte(data);
-            sendDataByte(PrinterCommand.POS_Set_PrtAndFeedPaper(30));
-            sendDataByte(PrinterCommand.POS_Set_Cut(1));
             sendDataByte(PrinterCommand.POS_Set_PrtInit());
         }
     }
+
 
 
     @ReactMethod
