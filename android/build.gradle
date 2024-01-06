@@ -1,7 +1,7 @@
 buildscript {
     repositories {
-        jcenter { url "http://jcenter.bintray.com/" }
-        maven {url "http://repo.spring.io/plugins-release/"}
+        jcenter { url "https://jcenter.bintray.com/" }
+        maven {url "https://repo.spring.io/plugins-release/"}
         mavenCentral()
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -20,12 +20,12 @@ buildscript {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     buildToolsVersion "28.0.3"
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 24
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
     }
@@ -40,8 +40,8 @@ android {
 }
 
 repositories {
-    jcenter { url "http://jcenter.bintray.com/" }
-    maven {url "http://repo.spring.io/plugins-release/"}
+    jcenter { url "https//jcenter.bintray.com/" }
+    maven {url "https://repo.spring.io/plugins-release/"}
     mavenCentral()
     maven {
         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -55,6 +55,7 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.facebook.react:react-native:+'  // From node_modules
-    implementation group: 'com.android.support', name: 'support-v4', version: '27.0.0'
-    implementation "com.google.zxing:core:3.3.0"
+    implementation 'androidx.appcompat:appcompat:1.4.0' // From node_modules
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'  
+    implementation "com.google.zxing:core:3.3.3" 
 }
