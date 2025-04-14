@@ -1,6 +1,6 @@
 {
-  "name": "react-native-bluetooth-escpos-printer",
-  "version": "0.0.6",
+  "name": "@ccdilan/react-native-bluetooth-escpos-printer",
+  "version": "0.2.0",
   "description": "React-Native plugin for the bluetooth ESC/POS printers.",
   "main": "index.js",
   "scripts": {
@@ -13,9 +13,25 @@
     "Bluetooth",
     "Printer"
   ],
-  "author": "janus j k lu",
+ "author": "Janus J K Lu",
+ "maintainers": [
+    {
+      "name": "Ccdilan",
+      "email": "ccdilan@gmail.com",
+      "url": "https://github.com/ccdilan"
+    }
+  ],
+  "contributors": [
+    "Janus J K Lu (Original Creator, https://github.com/januslo/react-native-bluetooth-escpos-printer)",
+    "Ccdilan (https://github.com/ccdilan)"
+  ],
   "license": "MIT",
   "peerDependencies": {
     "react-native": ">=0.55.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ccdilan/react-native-bluetooth-escpos-printer.git"
+  },
+  "homepage": "https://github.com/ccdilan/react-native-bluetooth-escpos-printer#readme"
 }

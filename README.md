@@ -1,4 +1,14 @@
-# react-native-bluetooch-escpos-printer
+# react-native-bluetooth-escpos-printer
+
+## Acknowledgments
+
+This project is based on the original work by [Janus J K Lu](https://github.com/januslo/react-native-bluetooth-escpos-printer).  
+Special thanks to Janus for the initial creation of this project, without which this fork wouldn't be possible.
+
+---
+
+Feel free to explore the original repository here: [januslo/react-native-bluetooth-escpos-printer](https://github.com/januslo/react-native-bluetooth-escpos-printer).
+
 
 React-Native plugin for the bluetooth ESC/POS & TSC printers.
 
