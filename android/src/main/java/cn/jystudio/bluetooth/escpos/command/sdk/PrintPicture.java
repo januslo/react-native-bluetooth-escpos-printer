@@ -77,10 +77,10 @@ public class PrintPicture {
      */
     public static byte[] Print_1D2A(Bitmap bmp) {
 
-			/*
-			 * 使用下传位图打印图片
-			 * 先收完再打印
-			 */
+            /*
+             * 使用下传位图打印图片
+             * 先收完再打印
+             */
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         byte data[] = new byte[1024 * 10];
